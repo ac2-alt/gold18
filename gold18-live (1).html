@@ -1,0 +1,750 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-Bpo7w5ZLRL71ogT/lgEmPS1Hkuq/fL7mEjFfXKwJ6Tk=' 'sha256-FRFOQvqfO9BuQ9lJBmQaXKrHWC7438yfExeoN9NlkZU='; style-src 'sha256-SRmWvfIUz7zpG4tRGIhPrAUhBlKdUDmLRke0yMtSS0E='; connect-src https://iran-market.github.io https://cdn.jsdelivr.net; img-src data:; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#0e1319" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f4f5f7" media="(prefers-color-scheme: light)">
+<meta name="robots" content="noindex">
+<meta name="description" content="نمودار قیمت هر گرم طلای ۱۸ عیار به تومان">
+<title>نمودار طلای ۱۸ عیار</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23d9a53a'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23fff' stroke-opacity='.55' stroke-width='2'/%3E%3C/svg%3E">
+<style>
+/* Layout: one column. Price headline, then chart with range tabs, then range stats, then connection details. */
+:root{
+  --bg:#f4f5f7; --panel:#ffffff; --fg:#14181f; --muted:#576070; --line:#dde1e8;
+  --accent:#9a6c08; --accent-soft:rgba(154,108,8,.14);
+  --up:#0f7a5a; --down:#bf3a2b; --focus:#1a5fd1;
+  --font:system-ui, -apple-system, "Segoe UI", "Noto Sans Arabic", "Noto Naskh Arabic", Tahoma, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e1319; --panel:#151c25; --fg:#eef1f5; --muted:#9aa6b7; --line:#26303d;
+    --accent:#e0b04a; --accent-soft:rgba(224,176,74,.18);
+    --up:#3ecf9b; --down:#ff7a6b; --focus:#7ab0ff; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e1319; --panel:#151c25; --fg:#eef1f5; --muted:#9aa6b7; --line:#26303d;
+  --accent:#e0b04a; --accent-soft:rgba(224,176,74,.18);
+  --up:#3ecf9b; --down:#ff7a6b; --focus:#7ab0ff; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--bg); color:var(--fg); font-family:var(--font); font-size:15px; line-height:1.65;
+  padding-block:max(16px, env(safe-area-inset-top,0px)) max(28px, env(safe-area-inset-bottom,0px));
+  padding-left:max(16px, env(safe-area-inset-left,0px));
+  padding-right:max(16px, env(safe-area-inset-right,0px));
+}
+.wrap{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px 12px;flex-wrap:wrap}
+h1{font-size:1.1rem;font-weight:800;margin:0;text-wrap:balance}
+.subtitle{margin:0;color:var(--muted);font-size:.8rem}
+.actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:var(--panel)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex:none}
+.pill[data-state="ok"] .dot{background:var(--up)}
+.pill[data-state="err"] .dot{background:var(--down)}
+.pill[data-state="stale"] .dot,.pill[data-state="cache"] .dot{background:var(--accent)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;min-width:0}
+.price-row{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.price{font-size:2.1rem;font-weight:800;line-height:1.25;font-variant-numeric:tabular-nums}
+.unit{color:var(--muted);font-size:.85rem}
+.delta-row{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;min-height:1.6em}
+.chg{font-size:.92rem;font-weight:700;font-variant-numeric:tabular-nums}
+.chg.up{color:var(--up)} .chg.down{color:var(--down)} .chg.flat{color:var(--muted)}
+.chg-amt{color:var(--muted);font-size:.82rem;font-variant-numeric:tabular-nums}
+.badges{display:flex;gap:6px;flex-wrap:wrap}
+.badges:empty{display:none}
+.badge{font-size:.72rem;border:1px solid var(--accent);color:var(--accent);border-radius:6px;padding:0 8px}
+.dayrange{margin-top:12px;direction:ltr}
+.dr-labels{display:flex;justify-content:space-between;gap:8px;font-size:.78rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.dr-title{direction:rtl}
+.dr-bar{position:relative;height:6px;border-radius:3px;background:var(--line);margin-top:6px}
+.dr-mark{position:absolute;top:50%;width:14px;height:14px;border-radius:50%;background:var(--accent);border:2px solid var(--panel);transform:translate(-50%,-50%)}
+.sub{color:var(--muted);font-size:.78rem;margin:10px 0 0}
+.chart-box{position:relative;margin-top:2px;touch-action:pan-y;min-height:220px}
+.chart-box svg{display:block;width:100%;height:auto;direction:ltr}
+.chart-cap{display:flex;justify-content:space-between;color:var(--muted);font-size:.75rem;margin-bottom:4px}
+.grid{stroke:var(--line);stroke-width:1}
+.axis{fill:var(--muted);font-size:11px;font-family:var(--font)}
+.area-top{stop-color:var(--accent);stop-opacity:.28}
+.area-bot{stop-color:var(--accent);stop-opacity:0}
+.line{fill:none;stroke:var(--accent);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.last{fill:var(--accent)}
+.cursor{stroke:var(--muted);stroke-dasharray:3 3}
+.cursor-dot{fill:var(--panel);stroke:var(--accent);stroke-width:2}
+.hit{fill:transparent;cursor:crosshair}
+.hit:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}
+.tip{position:absolute;top:0;pointer-events:none;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:3px 8px;font-size:.78rem;white-space:nowrap;font-variant-numeric:tabular-nums;transform:translateX(-50%);z-index:2}
+.empty{color:var(--muted);text-align:center;padding:56px 12px;font-size:.88rem;text-wrap:balance}
+.tabs{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.tab,.btn{font:inherit;font-size:.82rem;color:var(--muted);background:transparent;border:1px solid var(--line);border-radius:8px;padding:5px 12px;cursor:pointer;min-height:34px}
+.btn{color:var(--fg);background:var(--panel)}
+.tab[aria-pressed="true"]{color:var(--fg);border-color:var(--accent);background:var(--accent-soft)}
+.tab:focus-visible,.btn:focus-visible,summary:focus-visible,a:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.btn:disabled{opacity:.55;cursor:progress}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (min-width:520px){.stats{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.stat{min-width:0}
+.stat b{display:block;font-size:.98rem;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.stat span{color:var(--muted);font-size:.74rem}
+.stat b.up{color:var(--up)} .stat b.down{color:var(--down)}
+details{color:var(--muted);font-size:.78rem}
+summary{cursor:pointer;width:max-content;max-width:100%}
+details pre{direction:ltr;text-align:left;white-space:pre-wrap;overflow-wrap:anywhere;margin:6px 0 0;font-size:.74rem;font-family:ui-monospace,Menlo,Consolas,monospace}
+footer{color:var(--muted);font-size:.74rem;display:flex;flex-direction:column;gap:4px}
+footer a{color:inherit}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+noscript{display:block;color:var(--down);padding:12px}
+@media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<noscript>برای نمایش نمودار باید جاوااسکریپت فعال باشد.</noscript>
+<main class="wrap">
+  <header class="top">
+    <div>
+      <h1>طلای ۱۸ عیار</h1>
+      <p class="subtitle">قیمت هر گرم، به تومان</p>
+    </div>
+    <div class="actions">
+      <span class="pill" id="status" data-state="load" role="status"><i class="dot"></i><span id="statusText">در حال دریافت…</span></span>
+      <button class="btn" id="refresh" type="button">به‌روزرسانی</button>
+    </div>
+  </header>
+
+  <section class="card" aria-label="قیمت فعلی">
+    <div class="price-row"><span class="price" id="price">—</span><span class="unit">تومان</span></div>
+    <div class="delta-row"><span class="chg flat" id="chg"></span><span class="chg-amt" id="chgAmt"></span></div>
+    <div class="badges" id="badges"></div>
+    <div class="dayrange" id="dayRange" hidden>
+      <div class="dr-labels"><span id="drLow"></span><span class="dr-title">بازه‌ی امروز</span><span id="drHigh"></span></div>
+      <div class="dr-bar"><span class="dr-mark" id="drMark"></span></div>
+    </div>
+    <p class="sub" id="updated"></p>
+  </section>
+
+  <section class="card" aria-label="نمودار قیمت">
+    <div class="chart-cap"><span id="capRange">۳۰ روز اخیر</span><span>میلیون تومان</span></div>
+    <div class="chart-box" id="chartBox"></div>
+    <div class="tabs" role="group" aria-label="بازه‌ی نمودار" id="tabs">
+      <button class="tab" type="button" data-r="live" aria-pressed="false">زنده (همین مرورگر)</button>
+      <button class="tab" type="button" data-r="7" aria-pressed="false">۷ روز</button>
+      <button class="tab" type="button" data-r="30" aria-pressed="true">۳۰ روز</button>
+      <button class="tab" type="button" data-r="90" aria-pressed="false">۹۰ روز</button>
+      <button class="tab" type="button" data-r="365" aria-pressed="false">۱ سال</button>
+    </div>
+    <div class="sr" id="sr" aria-live="polite"></div>
+  </section>
+
+  <section class="card stats" id="stats" aria-label="خلاصه‌ی بازه"></section>
+
+  <details>
+    <summary>جزئیات اتصال</summary>
+    <pre id="diag"></pre>
+  </details>
+
+  <footer>
+    <span>منبع داده: TGJU، از طریق سرویس رایگان <a href="https://github.com/iran-market/iran-market.github.io" target="_blank" rel="noopener noreferrer">iran-market</a>. این سرویس هر ۳۰ دقیقه به‌روز می‌شود، پس نمودار «لحظه‌ای» به همین اندازه دقیق است.</span>
+    <span>قیمت‌ها فقط برای اطلاع‌رسانی است و برای خرید و فروش باید با بازار تطبیق داده شوند.</span>
+  </footer>
+</main>
+
+<script id="core">
+"use strict";
+(function (root) {
+  const SYMBOL = "TGJU_GOLD_IRG18";
+  const LIMITS = Object.freeze({
+    minToman: 1e5, maxToman: 1e10, maxBytes: 8 * 1024 * 1024,
+    staleMinutes: 90, maxHistory: 400, maxLive: 500, pollMs: 10 * 60 * 1000
+  });
+  const FA = "۰۱۲۳۴۵۶۷۸۹";
+  const AR = "٠١٢٣٤٥٦٧٨٩";
+  const QUALITY_FA = Object.freeze({ stale: "قدیمی", spike: "جهش غیرعادی" });
+
+  function isObj(x) { return x !== null && typeof x === "object" && !Array.isArray(x); }
+  function toFa(s) { return String(s).replace(/\d/g, function (d) { return FA[d]; }); }
+  function toNum(v) {
+    if (typeof v === "number") return Number.isFinite(v) ? v : null;
+    if (typeof v !== "string" || v.trim() === "") return null;
+    const s = v.replace(/[,٬\s]/g, "")
+      .replace(/[۰-۹]/g, function (d) { return FA.indexOf(d); })
+      .replace(/[٠-٩]/g, function (d) { return AR.indexOf(d); });
+    if (!/^-?\d+(\.\d+)?$/.test(s)) return null;
+    const n = Number(s);
+    return Number.isFinite(n) ? n : null;
+  }
+  function firstNum(o, keys) {
+    for (let i = 0; i < keys.length; i++) { const n = toNum(o[keys[i]]); if (n !== null) return n; }
+    return null;
+  }
+  function plausible(v) { return typeof v === "number" && Number.isFinite(v) && v >= LIMITS.minToman && v <= LIMITS.maxToman; }
+  function cleanLabel(s) { return String(s == null ? "" : s).replace(/[^0-9۰-۹\/\-: .]/g, "").trim().slice(0, 32); }
+  function timeOrNull(s) { const t = typeof s === "string" ? Date.parse(s) : NaN; return Number.isFinite(t) ? t : null; }
+
+  function safeParseJSON(text) {
+    if (typeof text !== "string") return { ok: false, error: "پاسخ متنی نیست" };
+    if (text.length > LIMITS.maxBytes) return { ok: false, error: "پاسخ بیش‌ازحد بزرگ است" };
+    try { return { ok: true, value: JSON.parse(text) }; } catch (e) { return { ok: false, error: "JSON نامعتبر" }; }
+  }
+
+  function flattenItems(payload) {
+    const out = [];
+    const d = isObj(payload) ? payload.data : null;
+    if (Array.isArray(d)) {
+      for (let i = 0; i < d.length; i++) if (isObj(d[i])) out.push(d[i]);
+    } else if (isObj(d) && isObj(d.categories)) {
+      const keys = Object.keys(d.categories);
+      for (let k = 0; k < keys.length; k++) {
+        const arr = d.categories[keys[k]];
+        if (Array.isArray(arr)) for (let i = 0; i < arr.length; i++) if (isObj(arr[i])) out.push(arr[i]);
+      }
+    }
+    return out;
+  }
+
+  function cleanQuality(q) {
+    return (Array.isArray(q) ? q : []).filter(function (x) { return typeof x === "string" && /^[a-z_]{1,20}$/.test(x); }).slice(0, 6);
+  }
+
+  function parseLatest(payload, symbol) {
+    const items = flattenItems(payload);
+    if (!items.length) return { ok: false, error: "ساختار پاسخ ناشناخته است" };
+    const want = symbol || SYMBOL;
+    const it = items.find(function (x) { return x.symbol === want; });
+    if (!it) return { ok: false, error: "نماد " + want + " در پاسخ نیست" };
+    if (it.currency !== "IRT" && it.currency !== "IRR") return { ok: false, error: "واحد پول ناشناخته است" };
+    const k = it.currency === "IRR" ? 10 : 1;
+    function money(v) { const n = toNum(v); return n === null ? null : n / k; }
+    const price = money(it.price);
+    if (!plausible(price)) return { ok: false, error: "قیمت نامعتبر است" };
+    const hi = money(it.high), lo = money(it.low), prev = money(it.prev_close), ch = money(it.change);
+    const pct = toNum(it.change_pct);
+    return {
+      ok: true,
+      value: {
+        price: price,
+        change: ch,
+        pct: pct !== null && Math.abs(pct) < 1000 ? pct : null,
+        high: plausible(hi) ? hi : null,
+        low: plausible(lo) ? lo : null,
+        prev: plausible(prev) ? prev : null,
+        itemTime: timeOrNull(it.timestamp),
+        generatedAt: timeOrNull(isObj(payload.data) ? payload.data.generated_at : null),
+        stale: it.stale === true,
+        quality: cleanQuality(it.quality)
+      }
+    };
+  }
+
+  function revalidateLatest(v) {
+    if (!isObj(v) || !plausible(v.price)) return null;
+    function num(x) { return typeof x === "number" && Number.isFinite(x) ? x : null; }
+    function mon(x) { return plausible(x) ? x : null; }
+    function tm(x) { return typeof x === "number" && Number.isFinite(x) ? x : null; }
+    return {
+      price: v.price, change: num(v.change),
+      pct: num(v.pct) !== null && Math.abs(v.pct) < 1000 ? v.pct : null,
+      high: mon(v.high), low: mon(v.low), prev: mon(v.prev),
+      itemTime: tm(v.itemTime), generatedAt: tm(v.generatedAt),
+      stale: v.stale === true, quality: cleanQuality(v.quality)
+    };
+  }
+
+  function parseHistory(payload) {
+    let list = null;
+    if (Array.isArray(payload)) list = payload;
+    else if (isObj(payload)) list = Array.isArray(payload.data) ? payload.data : Array.isArray(payload.candles) ? payload.candles : null;
+    if (!list) return { ok: false, error: "ساختار سری تاریخی ناشناخته است" };
+    const rows = [];
+    for (let i = 0; i < list.length; i++) {
+      const c = list[i];
+      if (!isObj(c)) continue;
+      const y = firstNum(c, ["close", "c", "price", "value"]);
+      if (y === null || y <= 0) continue;
+      rows.push({ y: y, label: cleanLabel(c.date_jalali != null ? c.date_jalali : c.date), t: timeOrNull(c.date) });
+    }
+    if (rows.length < 2) return { ok: false, error: "سری تاریخی خالی است" };
+    return { ok: true, value: rows.slice(-LIMITS.maxHistory) };
+  }
+
+  function revalidateHistory(rows) {
+    if (!Array.isArray(rows)) return null;
+    const out = [];
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+      if (!isObj(r) || typeof r.y !== "number" || !Number.isFinite(r.y) || r.y <= 0) continue;
+      out.push({ y: r.y, label: cleanLabel(r.label), t: typeof r.t === "number" && Number.isFinite(r.t) ? r.t : null });
+    }
+    return out.length >= 2 ? out.slice(-LIMITS.maxHistory) : null;
+  }
+
+  // The history file is named in rial. Compare with the live toman price when we have it.
+  function normalizeHistory(rows, anchorToman) {
+    if (!Array.isArray(rows) || !rows.length) return [];
+    const last = rows[rows.length - 1].y;
+    const scale = anchorToman > 0 ? (last / anchorToman > 5 ? 10 : 1) : (last > 1e8 ? 10 : 1);
+    return rows.map(function (r) { return { y: r.y / scale, label: r.label, t: r.t }; });
+  }
+
+  function sliceRange(rows, days) {
+    if (!Array.isArray(rows) || !(days > 0)) return [];
+    return rows.slice(-(Math.floor(days) + 1));
+  }
+
+  function mergeLive(prev, point, cap) {
+    const limit = cap || LIMITS.maxLive;
+    const list = [];
+    const src = Array.isArray(prev) ? prev : [];
+    for (let i = 0; i < src.length; i++) {
+      const p = src[i];
+      if (isObj(p) && Number.isFinite(p.t) && plausible(p.y)) list.push({ t: p.t, y: p.y });
+    }
+    if (isObj(point) && Number.isFinite(point.t) && plausible(point.y)) list.push({ t: point.t, y: point.y });
+    list.sort(function (a, b) { return a.t - b.t; });
+    const out = [];
+    for (let i = 0; i < list.length; i++) {
+      if (out.length && out[out.length - 1].t === list[i].t) out[out.length - 1] = list[i]; else out.push(list[i]);
+    }
+    return out.slice(-limit);
+  }
+
+  function rangeStats(points) {
+    if (!points || !points.length) return null;
+    let hi = -Infinity, lo = Infinity, sum = 0;
+    for (let i = 0; i < points.length; i++) { const y = points[i].y; if (y > hi) hi = y; if (y < lo) lo = y; sum += y; }
+    const first = points[0].y, last = points[points.length - 1].y;
+    return { hi: hi, lo: lo, avg: sum / points.length, first: first, last: last, changePct: first > 0 ? (last - first) / first * 100 : null };
+  }
+
+  function niceTicks(min, max, n) {
+    if (!(max > min)) return [min];
+    const span = max - min, raw = span / n, p = Math.pow(10, Math.floor(Math.log10(raw)));
+    const step = [1, 2, 2.5, 5, 10].map(function (m) { return m * p; }).find(function (s) { return s >= raw; }) || raw;
+    const out = [];
+    for (let i = Math.ceil(min / step); i * step <= max + step * 1e-9; i++) out.push(i * step);
+    return out;
+  }
+
+  function buildChartModel(points, W, H) {
+    const n = points.length;
+    const m = { l: 8, r: 46, t: 16, b: 28 };
+    const iw = W - m.l - m.r, ih = H - m.t - m.b;
+    let lo = Infinity, hi = -Infinity;
+    for (let i = 0; i < n; i++) { if (points[i].y < lo) lo = points[i].y; if (points[i].y > hi) hi = points[i].y; }
+    const pad = ((hi - lo) || hi * 0.01 || 1) * 0.12;
+    lo -= pad; hi += pad;
+    const r1 = function (v) { return Math.round(v * 10) / 10; };
+    const X = function (i) { return m.l + (n === 1 ? iw / 2 : (i / (n - 1)) * iw); };
+    const Y = function (v) { return m.t + (1 - (v - lo) / (hi - lo)) * ih; };
+    const coords = points.map(function (p, i) { return { x: r1(X(i)), y: r1(Y(p.y)) }; });
+    const line = coords.map(function (c, i) { return (i ? "L" : "M") + c.x + " " + c.y; }).join("");
+    const baseY = r1(m.t + ih);
+    const area = line + "L" + coords[n - 1].x + " " + baseY + "L" + coords[0].x + " " + baseY + "Z";
+    const yTicks = niceTicks(lo, hi, 4).map(function (v) { return { v: v, y: r1(Y(v)) }; });
+    const xIdx = n >= 3 ? [0, Math.floor((n - 1) / 2), n - 1] : n === 2 ? [0, 1] : [0];
+    return { W: W, H: H, m: m, iw: iw, ih: ih, lo: lo, hi: hi, coords: coords, line: line, area: area, baseY: baseY, yTicks: yTicks, xIdx: xIdx };
+  }
+
+  function nearestIndex(model, xSvg) {
+    const n = model.coords.length;
+    if (n < 2) return 0;
+    const f = (xSvg - model.m.l) / model.iw;
+    return Math.max(0, Math.min(n - 1, Math.round(f * (n - 1))));
+  }
+
+  function dayRangePosition(price, low, high) {
+    if (![price, low, high].every(Number.isFinite) || !(high > low)) return null;
+    return Math.max(0, Math.min(1, (price - low) / (high - low)));
+  }
+
+  function ageMinutes(ts, now) { return Number.isFinite(ts) ? (now - ts) / 60000 : null; }
+  function isStale(generatedAt, now) { const a = ageMinutes(generatedAt, now); return a !== null && a > LIMITS.staleMinutes; }
+  function backoff(failures) {
+    if (!(failures > 0)) return LIMITS.pollMs;
+    return Math.min(30000 * Math.pow(2, failures - 1), LIMITS.pollMs);
+  }
+
+  function mkNum(opts) {
+    try { const f = new Intl.NumberFormat("fa-IR", opts); return function (n) { return f.format(n); }; }
+    catch (e) { return function (n) { return toFa(String(Math.round(n * 100) / 100)); }; }
+  }
+  function mkDate(opts) {
+    try {
+      const f = new Intl.DateTimeFormat("fa-IR", Object.assign({ timeZone: "Asia/Tehran" }, opts));
+      return function (ms) { return Number.isFinite(ms) ? f.format(new Date(ms)) : ""; };
+    } catch (e) { return function () { return ""; }; }
+  }
+  const nInt = mkNum({ maximumFractionDigits: 0 });
+  const nDec = mkNum({ maximumFractionDigits: 2 });
+  const fmtTime = mkDate({ hour: "2-digit", minute: "2-digit" });
+  const fmtDateTime = mkDate({ year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" });
+
+  root.G18Core = Object.freeze({
+    SYMBOL: SYMBOL, LIMITS: LIMITS, QUALITY_FA: QUALITY_FA,
+    toFa: toFa, toNum: toNum, plausible: plausible, cleanLabel: cleanLabel, safeParseJSON: safeParseJSON,
+    flattenItems: flattenItems, parseLatest: parseLatest, revalidateLatest: revalidateLatest,
+    parseHistory: parseHistory, revalidateHistory: revalidateHistory, normalizeHistory: normalizeHistory,
+    sliceRange: sliceRange, mergeLive: mergeLive, rangeStats: rangeStats, niceTicks: niceTicks,
+    buildChartModel: buildChartModel, nearestIndex: nearestIndex, dayRangePosition: dayRangePosition,
+    ageMinutes: ageMinutes, isStale: isStale, backoff: backoff,
+    formatToman: function (n) { return nInt(Math.round(n)); },
+    formatDec: function (n) { return nDec(n); },
+    formatMillions: function (v) { return nDec(v / 1e6); },
+    formatTime: fmtTime, formatDateTime: fmtDateTime
+  });
+})(typeof globalThis !== "undefined" ? globalThis : this);
+</script>
+
+<script id="app">
+"use strict";
+(function () {
+  const C = window.G18Core;
+  const $ = function (id) { return document.getElementById(id); };
+  if (!C) { $("statusText").textContent = "بارگذاری برنامه ناموفق بود"; return; }
+
+  const SVGNS = "http://www.w3.org/2000/svg";
+  const FETCH_TIMEOUT = 12000;
+  const HISTORY_TTL = 6 * 3600 * 1000;
+  const RAW = "https://iran-market.github.io/data/";
+  const CDN = "https://cdn.jsdelivr.net/gh/iran-market/iran-market.github.io@main/data/";
+  const SOURCES = {
+    latest: [RAW + "latest-toman.json", CDN + "latest-toman.json"],
+    history: [RAW + "history/GOLD_18K_IRR.json", CDN + "history/GOLD_18K_IRR.json"]
+  };
+  const RANGES = { live: "نمودار زنده", "7": "۷ روز اخیر", "30": "۳۰ روز اخیر", "90": "۹۰ روز اخیر", "365": "یک سال اخیر" };
+
+  const store = {
+    get: function (k) { try { const v = localStorage.getItem("g18.v2." + k); return v ? JSON.parse(v) : null; } catch (e) { return null; } },
+    set: function (k, v) { try { localStorage.setItem("g18.v2." + k, JSON.stringify(v)); } catch (e) { /* storage may be unavailable */ } }
+  };
+
+  const savedRange = store.get("range");
+  const state = {
+    latest: C.revalidateLatest(store.get("latest")),
+    history: C.revalidateHistory(store.get("history")) || [],
+    historyAt: Number.isFinite(store.get("historyAt")) ? store.get("historyAt") : 0,
+    live: C.mergeLive(store.get("live"), null),
+    range: Object.prototype.hasOwnProperty.call(RANGES, savedRange) ? savedRange : "30",
+    loading: false, failures: 0, viaMirror: false, latestOk: false,
+    lastAttempt: 0, timer: null, drawnW: 0, model: null, points: [], cursor: null
+  };
+
+  const logLines = [];
+  function log(msg) {
+    logLines.push(new Date().toLocaleTimeString("en-GB") + "  " + msg);
+    if (logLines.length > 24) logLines.shift();
+    $("diag").textContent = logLines.join("\n");
+  }
+
+  function svgEl(tag, attrs, text) {
+    const e = document.createElementNS(SVGNS, tag);
+    for (const k in attrs) e.setAttribute(k, String(attrs[k]));
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function htmlEl(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  async function fetchText(url) {
+    const ctl = new AbortController();
+    const timer = setTimeout(function () { ctl.abort(); }, FETCH_TIMEOUT);
+    const t0 = performance.now();
+    try {
+      const r = await fetch(url, { cache: "no-cache", credentials: "omit", referrerPolicy: "no-referrer", signal: ctl.signal });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const len = Number(r.headers.get("content-length"));
+      if (len > C.LIMITS.maxBytes) throw new Error("پاسخ بیش‌ازحد بزرگ است");
+      const text = await r.text();
+      return { text: text, ms: Math.round(performance.now() - t0) };
+    } finally { clearTimeout(timer); }
+  }
+
+  async function fetchFirst(name, urls, parse) {
+    for (let i = 0; i < urls.length; i++) {
+      const host = new URL(urls[i]).host;
+      try {
+        const res = await fetchText(urls[i]);
+        const j = C.safeParseJSON(res.text);
+        if (!j.ok) throw new Error(j.error);
+        const p = parse(j.value);
+        if (!p.ok) throw new Error(p.error);
+        log(name + " ok · " + host + " · " + res.ms + "ms");
+        return { ok: true, value: p.value, mirror: i > 0 };
+      } catch (e) {
+        const why = e && e.name === "AbortError" ? "timeout" : (e && e.message) || "error";
+        log(name + " FAIL · " + host + " · " + why);
+      }
+    }
+    return { ok: false };
+  }
+
+  async function refresh() {
+    if (state.loading) return;
+    state.loading = true;
+    state.lastAttempt = Date.now();
+    $("refresh").disabled = true;
+    renderStatus();
+    const needHistory = !state.history.length || Date.now() - state.historyAt > HISTORY_TTL;
+    const results = await Promise.all([
+      fetchFirst("latest", SOURCES.latest, C.parseLatest),
+      needHistory ? fetchFirst("history", SOURCES.history, C.parseHistory) : Promise.resolve(null)
+    ]);
+    const l = results[0], h = results[1];
+    if (l.ok) {
+      state.latest = l.value;
+      state.viaMirror = l.mirror;
+      store.set("latest", l.value);
+      const t = l.value.itemTime || l.value.generatedAt || Date.now();
+      state.live = C.mergeLive(state.live, { t: t, y: l.value.price });
+      store.set("live", state.live);
+    }
+    if (h && h.ok) {
+      state.history = h.value;
+      state.historyAt = Date.now();
+      store.set("history", h.value);
+      store.set("historyAt", state.historyAt);
+    }
+    state.latestOk = l.ok;
+    state.failures = l.ok ? 0 : state.failures + 1;
+    state.loading = false;
+    $("refresh").disabled = false;
+    renderAll();
+    schedule();
+  }
+
+  function schedule() {
+    clearTimeout(state.timer);
+    state.timer = setTimeout(function () { if (document.hidden) schedule(); else refresh(); }, C.backoff(state.failures));
+  }
+
+  function computeStatus() {
+    const l = state.latest;
+    if (state.loading) return ["load", "در حال دریافت…"];
+    if (!l && !state.history.length) return ["err", "اتصال برقرار نشد"];
+    if (!l) return ["cache", "فقط داده‌ی تاریخی"];
+    if (!state.latestOk) return ["cache", navigator.onLine === false ? "آفلاین · داده‌ی ذخیره‌شده" : "داده‌ی ذخیره‌شده"];
+    if (l.stale || C.isStale(l.generatedAt, Date.now())) return ["stale", "داده قدیمی است"];
+    return ["ok", l.generatedAt ? "به‌روز · " + C.formatTime(l.generatedAt) : "به‌روز"];
+  }
+  function renderStatus() {
+    const s = computeStatus();
+    $("status").dataset.state = s[0];
+    $("statusText").textContent = s[1];
+  }
+
+  function renderHero() {
+    const l = state.latest;
+    $("price").textContent = l ? C.formatToman(l.price) : "—";
+    const chg = $("chg"), amt = $("chgAmt");
+    if (l && l.pct !== null) {
+      const dir = l.pct > 0 ? "up" : l.pct < 0 ? "down" : "flat";
+      chg.className = "chg " + dir;
+      chg.textContent = (l.pct > 0 ? "▲ " : l.pct < 0 ? "▼ " : "") + C.formatDec(Math.abs(l.pct)) + "٪";
+    } else { chg.className = "chg flat"; chg.textContent = ""; }
+    amt.textContent = l && l.change !== null ? C.formatToman(Math.abs(l.change)) + " تومان نسبت به روز قبل" : "";
+
+    const badges = $("badges");
+    badges.replaceChildren();
+    if (l) {
+      if (l.stale) badges.appendChild(htmlEl("span", "badge", C.QUALITY_FA.stale));
+      for (let i = 0; i < l.quality.length; i++) {
+        const fa = C.QUALITY_FA[l.quality[i]];
+        if (fa && !(l.stale && l.quality[i] === "stale")) badges.appendChild(htmlEl("span", "badge", fa));
+      }
+      if (state.viaMirror) badges.appendChild(htmlEl("span", "badge", "منبع جایگزین؛ ممکن است تأخیر داشته باشد"));
+    }
+
+    const dr = $("dayRange");
+    const pos = l ? C.dayRangePosition(l.price, l.low, l.high) : null;
+    if (pos === null) dr.hidden = true;
+    else {
+      dr.hidden = false;
+      $("drLow").textContent = C.formatToman(l.low);
+      $("drHigh").textContent = C.formatToman(l.high);
+      $("drMark").style.left = (pos * 100).toFixed(1) + "%";
+    }
+    $("updated").textContent = l && l.itemTime ? "آخرین قیمت ثبت‌شده: " + C.formatDateTime(l.itemTime) + " (به وقت تهران)" : "";
+  }
+
+  function currentPoints() {
+    if (state.range === "live") return state.live.map(function (p) { return { y: p.y, label: C.formatTime(p.t), t: p.t }; });
+    const anchor = state.latest ? state.latest.price : null;
+    const rows = C.sliceRange(C.normalizeHistory(state.history, anchor), Number(state.range));
+    return rows.map(function (r) { return { y: r.y, label: C.toFa(r.label), t: r.t }; });
+  }
+
+  function renderStats(points) {
+    const box = $("stats");
+    box.replaceChildren();
+    const s = C.rangeStats(points);
+    box.hidden = !s;
+    if (!s) return;
+    function stat(value, label, cls) {
+      const d = htmlEl("div", "stat");
+      d.appendChild(htmlEl("b", cls || "", value));
+      d.appendChild(htmlEl("span", "", label));
+      box.appendChild(d);
+    }
+    stat(C.formatToman(s.hi), "بیشترین (تومان)");
+    stat(C.formatToman(s.lo), "کمترین (تومان)");
+    stat(C.formatToman(s.avg), "میانگین (تومان)");
+    if (s.changePct !== null) {
+      const dir = s.changePct > 0 ? "up" : s.changePct < 0 ? "down" : "";
+      stat((s.changePct > 0 ? "▲ " : s.changePct < 0 ? "▼ " : "") + C.formatDec(Math.abs(s.changePct)) + "٪", "تغییر در بازه", dir);
+    }
+  }
+
+  function emptyMessage() {
+    if (state.range === "live") return "نمودار زنده با هر انتشار قیمت جدید (هر ۳۰ دقیقه) در همین مرورگر کامل می‌شود. بعداً دوباره سر بزن.";
+    if (state.loading) return "در حال دریافت داده…";
+    return "داده‌ای برای نمایش نیست. دکمه‌ی «به‌روزرسانی» را بزن و در «جزئیات اتصال» وضعیت را ببین.";
+  }
+
+  function drawChart() {
+    const box = $("chartBox");
+    const pts = state.points;
+    box.replaceChildren();
+    state.model = null;
+    if (pts.length < 2) { box.appendChild(htmlEl("div", "empty", emptyMessage())); return; }
+    const W = Math.max(260, Math.floor(box.clientWidth) || 320);
+    const H = Math.round(Math.min(340, Math.max(220, W * 0.58)));
+    state.drawnW = W;
+    const M = C.buildChartModel(pts, W, H);
+    state.model = M;
+
+    const s = C.rangeStats(pts);
+    const svg = svgEl("svg", {
+      viewBox: "0 0 " + W + " " + H, width: W, height: H, role: "img",
+      "aria-label": "نمودار قیمت طلای ۱۸ عیار، " + RANGES[state.range] + ". آخرین قیمت " + C.formatToman(s.last) + " تومان، بیشترین " + C.formatToman(s.hi) + "، کمترین " + C.formatToman(s.lo) + "."
+    });
+    const defs = svgEl("defs", {});
+    const grad = svgEl("linearGradient", { id: "areaGrad", x1: 0, y1: 0, x2: 0, y2: 1 });
+    grad.appendChild(svgEl("stop", { offset: 0, class: "area-top" }));
+    grad.appendChild(svgEl("stop", { offset: 1, class: "area-bot" }));
+    defs.appendChild(grad);
+    svg.appendChild(defs);
+
+    M.yTicks.forEach(function (t) {
+      svg.appendChild(svgEl("line", { class: "grid", x1: M.m.l, x2: M.m.l + M.iw, y1: t.y, y2: t.y }));
+      svg.appendChild(svgEl("text", { class: "axis", x: W - 4, y: t.y + 4, "text-anchor": "end" }, C.formatMillions(t.v)));
+    });
+    M.xIdx.forEach(function (i, k) {
+      const anchor = M.xIdx.length === 1 ? "middle" : k === 0 ? "start" : k === M.xIdx.length - 1 ? "end" : "middle";
+      svg.appendChild(svgEl("text", { class: "axis", x: M.coords[i].x, y: H - 8, "text-anchor": anchor }, pts[i].label));
+    });
+    svg.appendChild(svgEl("path", { d: M.area, fill: "url(#areaGrad)" }));
+    svg.appendChild(svgEl("path", { class: "line", d: M.line }));
+    const lastC = M.coords[M.coords.length - 1];
+    svg.appendChild(svgEl("circle", { class: "last", cx: lastC.x, cy: lastC.y, r: 4 }));
+    const cursor = svgEl("line", { class: "cursor", y1: M.m.t, y2: M.m.t + M.ih, visibility: "hidden" });
+    const dot = svgEl("circle", { class: "cursor-dot", r: 4.5, visibility: "hidden" });
+    svg.appendChild(cursor);
+    svg.appendChild(dot);
+    const hit = svgEl("rect", {
+      class: "hit", x: M.m.l, y: M.m.t, width: M.iw, height: M.ih, tabindex: 0,
+      role: "application", "aria-label": "مرور نقاط نمودار با کلیدهای جهت‌نما"
+    });
+    svg.appendChild(hit);
+    box.appendChild(svg);
+    const tip = htmlEl("div", "tip");
+    tip.hidden = true;
+    box.appendChild(tip);
+
+    function show(i, speak) {
+      state.cursor = i;
+      const c = M.coords[i];
+      cursor.setAttribute("x1", c.x); cursor.setAttribute("x2", c.x); cursor.setAttribute("visibility", "visible");
+      dot.setAttribute("cx", c.x); dot.setAttribute("cy", c.y); dot.setAttribute("visibility", "visible");
+      const text = pts[i].label + " · " + C.formatToman(pts[i].y) + " تومان";
+      tip.hidden = false;
+      tip.textContent = text;
+      const half = tip.offsetWidth / 2;
+      tip.style.left = Math.max(half, Math.min(W - half, (c.x / W) * box.clientWidth)) + "px";
+      if (speak) $("sr").textContent = text;
+    }
+    function hide() {
+      cursor.setAttribute("visibility", "hidden"); dot.setAttribute("visibility", "hidden"); tip.hidden = true; state.cursor = null;
+    }
+    let raf = 0;
+    function onPointer(ev) {
+      if (raf) return;
+      const cx = ev.clientX;
+      raf = requestAnimationFrame(function () {
+        raf = 0;
+        const r = svg.getBoundingClientRect();
+        if (!r.width) return;
+        show(C.nearestIndex(M, ((cx - r.left) / r.width) * W), false);
+      });
+    }
+    hit.addEventListener("pointermove", onPointer);
+    hit.addEventListener("pointerdown", onPointer);
+    hit.addEventListener("pointerleave", hide);
+    hit.addEventListener("blur", hide);
+    hit.addEventListener("keydown", function (ev) {
+      const n = pts.length;
+      let i = state.cursor === null ? n - 1 : state.cursor;
+      if (ev.key === "ArrowLeft") i = Math.max(0, i - 1);
+      else if (ev.key === "ArrowRight") i = Math.min(n - 1, i + 1);
+      else if (ev.key === "Home") i = 0;
+      else if (ev.key === "End") i = n - 1;
+      else if (ev.key === "Escape") { hide(); return; }
+      else return;
+      ev.preventDefault();
+      show(i, true);
+    });
+  }
+
+  function renderAll() {
+    renderStatus();
+    renderHero();
+    state.points = currentPoints();
+    $("capRange").textContent = RANGES[state.range];
+    drawChart();
+    renderStats(state.points.length >= 2 ? state.points : []);
+  }
+
+  $("tabs").addEventListener("click", function (e) {
+    const b = e.target.closest ? e.target.closest(".tab") : null;
+    if (!b || !Object.prototype.hasOwnProperty.call(RANGES, b.dataset.r)) return;
+    state.range = b.dataset.r;
+    store.set("range", state.range);
+    document.querySelectorAll(".tab").forEach(function (t) { t.setAttribute("aria-pressed", String(t === b)); });
+    renderAll();
+  });
+  document.querySelectorAll(".tab").forEach(function (t) { t.setAttribute("aria-pressed", String(t.dataset.r === state.range)); });
+  $("refresh").addEventListener("click", refresh);
+
+  let resizeRaf = 0;
+  function onResize() {
+    if (resizeRaf) return;
+    resizeRaf = requestAnimationFrame(function () {
+      resizeRaf = 0;
+      const w = Math.floor($("chartBox").clientWidth);
+      if (w && Math.abs(w - state.drawnW) > 8 && state.points.length >= 2) drawChart();
+    });
+  }
+  if (typeof ResizeObserver === "function") new ResizeObserver(onResize).observe($("chartBox"));
+  else window.addEventListener("resize", onResize);
+
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden && Date.now() - state.lastAttempt > C.backoff(0)) refresh();
+  });
+  window.addEventListener("online", function () { refresh(); });
+  window.addEventListener("offline", renderStatus);
+
+  renderAll();
+  refresh();
+})();
+</script>
+</body>
+</html>

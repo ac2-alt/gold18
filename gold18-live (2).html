@@ -1,0 +1,1707 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-7WJc7girv1MxWELDo88Hc2uDRwrES3/4fmmr/pFVCVE=' 'sha256-dyh8JlIFB9QOMmCIkdEp7Jc7x5EVjYIVzr/Cnt/BqJ8=' 'sha256-MMSH4Jw96cxH49GMNGwc+6V0X21aZTYJB56mfeDkJB0='; style-src 'sha256-ubbELnNa9syyiQo8iaQ7ppbwNMnbR6xSSOElTb19170='; connect-src https://iran-market.github.io https://cdn.jsdelivr.net; img-src data:; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#0e1319" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f4f5f7" media="(prefers-color-scheme: light)">
+<meta name="robots" content="noindex">
+<meta name="description" content="نمودار و تحلیل قیمت طلای ۱۸ عیار، سکه، دلار و تتر">
+<title>نمودار طلای ۱۸ عیار</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23d9a53a'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23fff' stroke-opacity='.55' stroke-width='2'/%3E%3C/svg%3E">
+<style>/* Layout: one column. Price headline, then chart with range tabs, then range stats, then connection details. */
+:root{
+  --bg:#f4f5f7; --panel:#ffffff; --fg:#14181f; --muted:#576070; --line:#dde1e8;
+  --accent:#9a6c08; --accent-soft:rgba(154,108,8,.14);
+  --up:#0f7a5a; --down:#bf3a2b; --focus:#1a5fd1;
+  --font:system-ui, -apple-system, "Segoe UI", "Noto Sans Arabic", "Noto Naskh Arabic", Tahoma, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e1319; --panel:#151c25; --fg:#eef1f5; --muted:#9aa6b7; --line:#26303d;
+    --accent:#e0b04a; --accent-soft:rgba(224,176,74,.18);
+    --up:#3ecf9b; --down:#ff7a6b; --focus:#7ab0ff; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e1319; --panel:#151c25; --fg:#eef1f5; --muted:#9aa6b7; --line:#26303d;
+  --accent:#e0b04a; --accent-soft:rgba(224,176,74,.18);
+  --up:#3ecf9b; --down:#ff7a6b; --focus:#7ab0ff; color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{
+  background:var(--bg); color:var(--fg); font-family:var(--font); font-size:15px; line-height:1.65;
+  padding-block:max(16px, env(safe-area-inset-top,0px)) max(28px, env(safe-area-inset-bottom,0px));
+  padding-left:max(16px, env(safe-area-inset-left,0px));
+  padding-right:max(16px, env(safe-area-inset-right,0px));
+}
+.wrap{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px 12px;flex-wrap:wrap}
+h1{font-size:1.1rem;font-weight:800;margin:0;text-wrap:balance}
+.subtitle{margin:0;color:var(--muted);font-size:.8rem}
+.actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:var(--panel)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex:none}
+.pill[data-state="ok"] .dot{background:var(--up)}
+.pill[data-state="err"] .dot{background:var(--down)}
+.pill[data-state="stale"] .dot,.pill[data-state="cache"] .dot{background:var(--accent)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;min-width:0}
+.price-row{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.price{font-size:2.1rem;font-weight:800;line-height:1.25;font-variant-numeric:tabular-nums}
+.unit{color:var(--muted);font-size:.85rem}
+.delta-row{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;min-height:1.6em}
+.chg{font-size:.92rem;font-weight:700;font-variant-numeric:tabular-nums}
+.chg.up{color:var(--up)} .chg.down{color:var(--down)} .chg.flat{color:var(--muted)}
+.chg-amt{color:var(--muted);font-size:.82rem;font-variant-numeric:tabular-nums}
+.badges{display:flex;gap:6px;flex-wrap:wrap}
+.badges:empty{display:none}
+.badge{font-size:.72rem;border:1px solid var(--accent);color:var(--accent);border-radius:6px;padding:0 8px}
+.dayrange{margin-top:12px;direction:ltr}
+.dr-labels{display:flex;justify-content:space-between;gap:8px;font-size:.78rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.dr-title{direction:rtl}
+.dr-bar{position:relative;height:6px;border-radius:3px;background:var(--line);margin-top:6px}
+.dr-mark{position:absolute;top:50%;width:14px;height:14px;border-radius:50%;background:var(--accent);border:2px solid var(--panel);transform:translate(-50%,-50%)}
+.sub{color:var(--muted);font-size:.78rem;margin:10px 0 0}
+.chart-box{position:relative;margin-top:2px;touch-action:pan-y;min-height:220px}
+.chart-box svg{display:block;width:100%;height:auto;direction:ltr}
+.chart-cap{display:flex;justify-content:space-between;color:var(--muted);font-size:.75rem;margin-bottom:4px}
+.grid{stroke:var(--line);stroke-width:1}
+.axis{fill:var(--muted);font-size:11px;font-family:var(--font)}
+.area-top{stop-color:var(--accent);stop-opacity:.28}
+.area-bot{stop-color:var(--accent);stop-opacity:0}
+.line{fill:none;stroke:var(--accent);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.last{fill:var(--accent)}
+.cursor{stroke:var(--muted);stroke-dasharray:3 3}
+.cursor-dot{fill:var(--panel);stroke:var(--accent);stroke-width:2}
+.hit{fill:transparent;cursor:crosshair}
+.hit:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}
+.tip{position:absolute;top:0;pointer-events:none;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:3px 8px;font-size:.78rem;white-space:nowrap;font-variant-numeric:tabular-nums;transform:translateX(-50%);z-index:2}
+.empty{color:var(--muted);text-align:center;padding:56px 12px;font-size:.88rem;text-wrap:balance}
+.tabs{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.tab,.btn{font:inherit;font-size:.82rem;color:var(--muted);background:transparent;border:1px solid var(--line);border-radius:8px;padding:5px 12px;cursor:pointer;min-height:34px}
+.btn{color:var(--fg);background:var(--panel)}
+.tab[aria-pressed="true"]{color:var(--fg);border-color:var(--accent);background:var(--accent-soft)}
+.tab:focus-visible,.btn:focus-visible,summary:focus-visible,a:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.btn:disabled{opacity:.55;cursor:progress}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (min-width:520px){.stats{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.stat{min-width:0}
+.stat b{display:block;font-size:.98rem;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.stat span{color:var(--muted);font-size:.74rem}
+.stat b.up{color:var(--up)} .stat b.down{color:var(--down)}
+details{color:var(--muted);font-size:.78rem}
+summary{cursor:pointer;width:max-content;max-width:100%}
+details pre{direction:ltr;text-align:left;white-space:pre-wrap;overflow-wrap:anywhere;margin:6px 0 0;font-size:.74rem;font-family:ui-monospace,Menlo,Consolas,monospace}
+footer{color:var(--muted);font-size:.74rem;display:flex;flex-direction:column;gap:4px}
+footer a{color:inherit}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+noscript{display:block;color:var(--down);padding:12px}
+@media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}}
+
+/* ---- v3: assets, chart controls, analysis, alerts ---- */
+:root{ --c2:#1f5fcf; --c3:#7a3ec2; --c2-soft:rgba(31,95,207,.12); }
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --c2:#6aa8ff; --c3:#c39bff; --c2-soft:rgba(106,168,255,.14); } }
+:root[data-theme="dark"]{ --c2:#6aa8ff; --c3:#c39bff; --c2-soft:rgba(106,168,255,.14); }
+.assets,.seg-group{display:flex;gap:6px;flex-wrap:wrap}
+.seg{font:inherit;font-size:.85rem;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 14px;cursor:pointer;min-height:36px}
+.seg[aria-pressed="true"]{color:var(--fg);border-color:var(--accent);background:var(--accent-soft);font-weight:700}
+.seg:disabled,.tab:disabled,.chip:disabled{opacity:.45;cursor:not-allowed}
+.seg:focus-visible,.chip:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.controls{display:flex;gap:10px 14px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.chip{font:inherit;font-size:.78rem;color:var(--muted);background:transparent;border:1px solid var(--line);border-radius:999px;padding:3px 12px;cursor:pointer;min-height:30px}
+.chip[aria-pressed="true"]{color:var(--fg);border-color:var(--c2);background:var(--c2-soft)}
+select,input[type="text"]{font:inherit;font-size:.85rem;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:5px 10px;min-height:36px;max-width:100%}
+label.inline{display:inline-flex;gap:6px;align-items:center;color:var(--muted);font-size:.82rem}
+.legend{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:.75rem;color:var(--muted);margin-bottom:4px;min-height:1.2em}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:14px;height:3px;border-radius:2px;background:var(--accent);display:inline-block}
+.sw.b{background:var(--c2)} .sw.c{background:var(--c3)} .sw.band{height:10px;background:var(--c2-soft);border:1px solid var(--c2)}
+.sw.up{background:var(--up);height:10px;width:6px} .sw.down{background:var(--down);height:10px;width:6px}
+.note{color:var(--muted);font-size:.76rem;margin:6px 0 0}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.ma1{fill:none;stroke:var(--c2);stroke-width:1.4;stroke-linejoin:round}
+.ma2{fill:none;stroke:var(--c3);stroke-width:1.4;stroke-linejoin:round}
+.cmpb{fill:none;stroke:var(--c2);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.bbband{fill:var(--c2-soft);stroke:none}
+.bbline{fill:none;stroke:var(--c2);stroke-width:1;stroke-opacity:.55;stroke-dasharray:4 3}
+.cup{fill:var(--up);stroke:var(--up)} .cdown{fill:var(--down);stroke:var(--down)}
+.wick-up{stroke:var(--up);stroke-width:1} .wick-down{stroke:var(--down);stroke-width:1}
+.hist-up{fill:var(--up);fill-opacity:.55} .hist-down{fill:var(--down);fill-opacity:.55}
+.panel-title{fill:var(--muted);font-size:11px;font-family:var(--font)}
+.guide{stroke:var(--line);stroke-width:1;stroke-dasharray:3 3}
+.zero{stroke:var(--muted);stroke-width:1;stroke-opacity:.6}
+.p-rsi{fill:none;stroke:var(--accent);stroke-width:1.5}
+.p-macd{fill:none;stroke:var(--c2);stroke-width:1.4} .p-sig{fill:none;stroke:var(--c3);stroke-width:1.4}
+h2{font-size:1rem;margin:0 0 8px;font-weight:800}
+h3{font-size:.84rem;margin:14px 0 6px;color:var(--muted);font-weight:700}
+.summary{margin:0;padding:0 18px 0 0;display:flex;flex-direction:column;gap:6px;font-size:.88rem}
+.summary li:last-child{color:var(--muted);font-size:.78rem}
+.mgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px}
+@media (min-width:520px){.mgrid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.m{min-width:0;border-top:1px solid var(--line);padding-top:6px}
+.m b{display:block;font-size:.92rem;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.m span{color:var(--muted);font-size:.72rem}
+.m b.up{color:var(--up)} .m b.down{color:var(--down)}
+.guide-list{margin:6px 0 0;padding:0 16px 0 0;display:flex;flex-direction:column;gap:4px}
+.banner{display:flex;gap:10px;align-items:center;justify-content:space-between;background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;padding:10px 14px;font-weight:600}
+.banner[hidden]{display:none}
+form.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.alist{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.alist li{display:flex;justify-content:space-between;gap:10px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:.85rem;font-variant-numeric:tabular-nums}
+.msg{color:var(--down);font-size:.8rem;margin:6px 0 0;min-height:1.2em}
+.msg.ok{color:var(--up)}
+.kicker{color:var(--muted);font-size:.76rem}
+</style>
+</head>
+<body>
+<noscript>برای نمایش نمودار باید جاوااسکریپت فعال باشد.</noscript>
+<main class="wrap">
+  <header class="top">
+    <div>
+      <h1>بازار طلا</h1>
+      <p class="subtitle" id="subtitle">قیمت هر گرم طلای ۱۸ عیار، به تومان</p>
+    </div>
+    <div class="actions">
+      <span class="pill" id="status" data-state="load" role="status"><i class="dot"></i><span id="statusText">در حال دریافت…</span></span>
+      <button class="btn" id="refresh" type="button">به‌روزرسانی</button>
+    </div>
+  </header>
+
+  <div class="banner" id="alertBanner" role="alert" hidden><span id="alertBannerText"></span><button class="btn" id="alertDismiss" type="button">بستن</button></div>
+
+  <div class="assets" role="group" aria-label="انتخاب دارایی" id="assetTabs">
+    <button class="seg" type="button" data-a="gold" aria-pressed="true">طلای ۱۸ عیار</button>
+    <button class="seg" type="button" data-a="coin" aria-pressed="false">سکه امامی</button>
+    <button class="seg" type="button" data-a="usd" aria-pressed="false">دلار آزاد</button>
+    <button class="seg" type="button" data-a="usdt" aria-pressed="false">تتر</button>
+  </div>
+
+  <section class="card" aria-label="قیمت فعلی">
+    <div class="kicker" id="kicker">قیمت لحظه‌ای</div>
+    <div class="price-row"><span class="price" id="price">—</span><span class="unit" id="unit">تومان</span></div>
+    <div class="delta-row"><span class="chg flat" id="chg"></span><span class="chg-amt" id="chgAmt"></span></div>
+    <div class="badges" id="badges"></div>
+    <div class="dayrange" id="dayRange" hidden>
+      <div class="dr-labels"><span id="drLow"></span><span class="dr-title">بازه‌ی امروز</span><span id="drHigh"></span></div>
+      <div class="dr-bar"><span class="dr-mark" id="drMark"></span></div>
+    </div>
+    <p class="sub" id="updated"></p>
+  </section>
+
+  <section class="card" aria-label="نمودار">
+    <div class="controls">
+      <div class="seg-group" role="group" aria-label="نوع نمودار" id="viewTabs">
+        <button class="seg" type="button" data-v="price" aria-pressed="true">قیمت</button>
+        <button class="seg" type="button" data-v="candle" aria-pressed="false">کندل</button>
+        <button class="seg" type="button" data-v="compare" aria-pressed="false">مقایسه</button>
+      </div>
+      <label class="inline" id="cmpWrap" hidden>با <select id="cmp" aria-label="دارایی مقایسه"></select></label>
+    </div>
+    <div class="chips" role="group" aria-label="اندیکاتورها" id="overlays">
+      <button class="chip" type="button" data-o="ma" aria-pressed="false">میانگین متحرک</button>
+      <button class="chip" type="button" data-o="bb" aria-pressed="false">باند بولینگر</button>
+      <button class="chip" type="button" data-o="rsi" aria-pressed="false">RSI</button>
+      <button class="chip" type="button" data-o="macd" aria-pressed="false">MACD</button>
+    </div>
+    <div class="chart-cap"><span id="capRange">۳۰ روز اخیر</span><span id="capUnit"></span></div>
+    <div class="legend" id="legend"></div>
+    <div class="chart-box" id="chartBox"></div>
+    <p class="note" id="chartNote" hidden></p>
+    <div class="tabs" role="group" aria-label="بازه‌ی نمودار" id="tabs">
+      <button class="tab" type="button" data-r="live" aria-pressed="false">زنده (همین مرورگر)</button>
+      <button class="tab" type="button" data-r="7" aria-pressed="false">۷ روز</button>
+      <button class="tab" type="button" data-r="30" aria-pressed="true">۳۰ روز</button>
+      <button class="tab" type="button" data-r="90" aria-pressed="false">۹۰ روز</button>
+      <button class="tab" type="button" data-r="365" aria-pressed="false">۱ سال</button>
+    </div>
+    <div class="tools">
+      <button class="btn" type="button" id="btnCsv">دانلود CSV</button>
+      <button class="btn" type="button" id="btnPng">دانلود تصویر</button>
+    </div>
+    <div class="sr" id="sr" aria-live="polite"></div>
+  </section>
+
+  <section class="card stats" id="stats" aria-label="خلاصه‌ی بازه"></section>
+
+  <section class="card" id="analysis" aria-label="تحلیل بازار">
+    <h2>تحلیل بازار</h2>
+    <ul class="summary" id="summary"></ul>
+    <div id="metrics"></div>
+    <details>
+      <summary>راهنمای شاخص‌ها</summary>
+      <ul class="guide-list">
+        <li><b>بازده:</b> درصد تغییر قیمت نسبت به همان‌قدر روز قبل.</li>
+        <li><b>نوسان روزانه:</b> انحراف معیار تغییرات روزانه. عدد بزرگ‌تر یعنی قیمت بیشتر بالا و پایین می‌رود.</li>
+        <li><b>افت از قله:</b> فاصله‌ی قیمت از بیشینه‌ی یک‌ساله. بیشینه‌ی افت، بدترین افت همان یک سال است.</li>
+        <li><b>RSI:</b> مقیاس ۰ تا ۱۰۰ از قدرت حرکت اخیر. بالای ۷۰ را اشباع خرید و زیر ۳۰ را اشباع فروش می‌گویند، ولی در روندهای قوی مدت‌ها همان‌جا می‌ماند.</li>
+        <li><b>MACD:</b> اختلاف میانگین‌های ۱۲ و ۲۶ روزه. هیستوگرام مثبت یعنی شتاب اخیر رو به بالاست.</li>
+        <li><b>باند بولینگر:</b> محدوده‌ی دو انحراف معیار دور میانگین ۲۰ روزه. «جایگاه» یعنی قیمت کجای این باند است.</li>
+        <li><b>ATR:</b> میانگین دامنه‌ی روزانه‌ی قیمت (با احتساب شکاف). فقط وقتی داده‌ی باز، بالا و پایین موجود باشد نمایش داده می‌شود.</li>
+        <li><b>همبستگی با دلار:</b> بین ۱- و ۱+. نزدیک ۱+ یعنی تغییرات روزانه‌ی طلا و دلار هم‌جهت بوده است.</li>
+        <li><b>حباب سکه:</b> تفاوت قیمت سکه با ارزش طلای داخل آن (۸٫۱۳۳ گرم با عیار ۹۰۰ معادل حدود ۹٫۷۶ گرم طلای ۱۸ عیار). برآورد تقریبی است.</li>
+      </ul>
+    </details>
+  </section>
+
+  <section class="card" id="alerts" aria-label="هشدار قیمت">
+    <h2>هشدار قیمت طلای ۱۸ عیار</h2>
+    <form class="row" id="alertForm" novalidate>
+      <label class="inline">وقتی قیمت <select id="alertDir"><option value="above">بالاتر از</option><option value="below">پایین‌تر از</option></select></label>
+      <input type="text" id="alertLevel" inputmode="numeric" dir="ltr" placeholder="مثلاً 26000000" aria-label="سطح قیمت به تومان" autocomplete="off" maxlength="14">
+      <button class="btn" type="submit" id="alertAdd">افزودن</button>
+    </form>
+    <p class="msg" id="alertMsg" role="status"></p>
+    <ul class="alist" id="alertList"></ul>
+    <p class="note">هشدار فقط وقتی این صفحه باز است و داده‌ی جدید می‌آید بررسی می‌شود. داده‌ی منبع هر ۳۰ دقیقه به‌روز می‌شود.</p>
+  </section>
+
+  <details>
+    <summary>جزئیات اتصال</summary>
+    <pre id="diag"></pre>
+  </details>
+
+  <footer>
+    <span>منبع داده: TGJU، از طریق سرویس رایگان <a href="https://github.com/iran-market/iran-market.github.io" target="_blank" rel="noopener noreferrer">iran-market</a>. این سرویس هر ۳۰ دقیقه به‌روز می‌شود، پس نمودار «لحظه‌ای» به همین اندازه دقیق است.</span>
+    <span>همه‌ی تحلیل‌ها توصیف آماری گذشته است، پیش‌بینی یا پیشنهاد خرید و فروش نیست. قیمت‌ها فقط برای اطلاع‌رسانی است و باید با بازار تطبیق داده شوند.</span>
+  </footer>
+</main>
+
+<script id="core">"use strict";
+(function (root) {
+  const SYMBOL = "TGJU_GOLD_IRG18";
+  const LIMITS = Object.freeze({
+    minToman: 1e5, maxToman: 1e10, maxBytes: 8 * 1024 * 1024,
+    staleMinutes: 90, maxHistory: 450, maxLive: 500, pollMs: 10 * 60 * 1000
+  });
+  const FA = "۰۱۲۳۴۵۶۷۸۹";
+  const AR = "٠١٢٣٤٥٦٧٨٩";
+  const QUALITY_FA = Object.freeze({ stale: "قدیمی", spike: "جهش غیرعادی" });
+
+  function isObj(x) { return x !== null && typeof x === "object" && !Array.isArray(x); }
+  function toFa(s) { return String(s).replace(/\d/g, function (d) { return FA[d]; }); }
+  function toNum(v) {
+    if (typeof v === "number") return Number.isFinite(v) ? v : null;
+    if (typeof v !== "string" || v.trim() === "") return null;
+    const s = v.replace(/[,٬\s]/g, "")
+      .replace(/[۰-۹]/g, function (d) { return FA.indexOf(d); })
+      .replace(/[٠-٩]/g, function (d) { return AR.indexOf(d); });
+    if (!/^-?\d+(\.\d+)?$/.test(s)) return null;
+    const n = Number(s);
+    return Number.isFinite(n) ? n : null;
+  }
+  function firstNum(o, keys) {
+    for (let i = 0; i < keys.length; i++) { const n = toNum(o[keys[i]]); if (n !== null) return n; }
+    return null;
+  }
+  function plausible(v) { return typeof v === "number" && Number.isFinite(v) && v >= LIMITS.minToman && v <= LIMITS.maxToman; }
+  function cleanLabel(s) { return String(s == null ? "" : s).replace(/[^0-9۰-۹\/\-: .]/g, "").trim().slice(0, 32); }
+  function timeOrNull(s) { const t = typeof s === "string" ? Date.parse(s) : NaN; return Number.isFinite(t) ? t : null; }
+
+  function safeParseJSON(text) {
+    if (typeof text !== "string") return { ok: false, error: "پاسخ متنی نیست" };
+    if (text.length > LIMITS.maxBytes) return { ok: false, error: "پاسخ بیش‌ازحد بزرگ است" };
+    try { return { ok: true, value: JSON.parse(text) }; } catch (e) { return { ok: false, error: "JSON نامعتبر" }; }
+  }
+
+  function flattenItems(payload) {
+    const out = [];
+    const d = isObj(payload) ? payload.data : null;
+    if (Array.isArray(d)) {
+      for (let i = 0; i < d.length; i++) if (isObj(d[i])) out.push(d[i]);
+    } else if (isObj(d) && isObj(d.categories)) {
+      const keys = Object.keys(d.categories);
+      for (let k = 0; k < keys.length; k++) {
+        const arr = d.categories[keys[k]];
+        if (Array.isArray(arr)) for (let i = 0; i < arr.length; i++) if (isObj(arr[i])) out.push(arr[i]);
+      }
+    }
+    return out;
+  }
+
+  function cleanQuality(q) {
+    return (Array.isArray(q) ? q : []).filter(function (x) { return typeof x === "string" && /^[a-z_]{1,20}$/.test(x); }).slice(0, 6);
+  }
+
+  function parseLatest(payload, symbol) {
+    const items = flattenItems(payload);
+    if (!items.length) return { ok: false, error: "ساختار پاسخ ناشناخته است" };
+    const want = symbol || SYMBOL;
+    const it = items.find(function (x) { return x.symbol === want; });
+    if (!it) return { ok: false, error: "نماد " + want + " در پاسخ نیست" };
+    if (it.currency !== "IRT" && it.currency !== "IRR") return { ok: false, error: "واحد پول ناشناخته است" };
+    const k = it.currency === "IRR" ? 10 : 1;
+    function money(v) { const n = toNum(v); return n === null ? null : n / k; }
+    const price = money(it.price);
+    if (!plausible(price)) return { ok: false, error: "قیمت نامعتبر است" };
+    const hi = money(it.high), lo = money(it.low), prev = money(it.prev_close), ch = money(it.change);
+    const pct = toNum(it.change_pct);
+    return {
+      ok: true,
+      value: {
+        price: price,
+        change: ch,
+        pct: pct !== null && Math.abs(pct) < 1000 ? pct : null,
+        high: plausible(hi) ? hi : null,
+        low: plausible(lo) ? lo : null,
+        prev: plausible(prev) ? prev : null,
+        itemTime: timeOrNull(it.timestamp),
+        generatedAt: timeOrNull(isObj(payload.data) ? payload.data.generated_at : null),
+        stale: it.stale === true,
+        quality: cleanQuality(it.quality)
+      }
+    };
+  }
+
+  function revalidateLatest(v) {
+    if (!isObj(v) || !plausible(v.price)) return null;
+    function num(x) { return typeof x === "number" && Number.isFinite(x) ? x : null; }
+    function mon(x) { return plausible(x) ? x : null; }
+    function tm(x) { return typeof x === "number" && Number.isFinite(x) ? x : null; }
+    return {
+      price: v.price, change: num(v.change),
+      pct: num(v.pct) !== null && Math.abs(v.pct) < 1000 ? v.pct : null,
+      high: mon(v.high), low: mon(v.low), prev: mon(v.prev),
+      itemTime: tm(v.itemTime), generatedAt: tm(v.generatedAt),
+      stale: v.stale === true, quality: cleanQuality(v.quality)
+    };
+  }
+
+  function parseHistory(payload) {
+    let list = null;
+    if (Array.isArray(payload)) list = payload;
+    else if (isObj(payload)) list = Array.isArray(payload.data) ? payload.data : Array.isArray(payload.candles) ? payload.candles : null;
+    if (!list) return { ok: false, error: "ساختار سری تاریخی ناشناخته است" };
+    const rows = [];
+    for (let i = 0; i < list.length; i++) {
+      const c = list[i];
+      if (!isObj(c)) continue;
+      const y = firstNum(c, ["close", "c", "price", "value"]);
+      if (y === null || y <= 0) continue;
+      const o = firstNum(c, ["open", "o"]), h = firstNum(c, ["high", "h"]), l = firstNum(c, ["low", "l"]);
+      const ohlc = o !== null && h !== null && l !== null && o > 0 && l > 0 && h >= l;
+      rows.push({ y: y, o: ohlc ? o : null, h: ohlc ? h : null, l: ohlc ? l : null, label: cleanLabel(c.date_jalali != null ? c.date_jalali : c.date), t: timeOrNull(c.date) });
+    }
+    if (rows.length < 2) return { ok: false, error: "سری تاریخی خالی است" };
+    return { ok: true, value: rows.slice(-LIMITS.maxHistory) };
+  }
+
+  function revalidateHistory(rows) {
+    if (!Array.isArray(rows)) return null;
+    const out = [];
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+      if (!isObj(r) || typeof r.y !== "number" || !Number.isFinite(r.y) || r.y <= 0) continue;
+      const ohlc = [r.o, r.h, r.l].every(function (v) { return typeof v === "number" && Number.isFinite(v) && v > 0; }) && r.h >= r.l;
+      out.push({ y: r.y, o: ohlc ? r.o : null, h: ohlc ? r.h : null, l: ohlc ? r.l : null, label: cleanLabel(r.label), t: typeof r.t === "number" && Number.isFinite(r.t) ? r.t : null });
+    }
+    return out.length >= 2 ? out.slice(-LIMITS.maxHistory) : null;
+  }
+
+  // History files are named *_IRR (rial). With a live toman price we verify the unit; otherwise we use defaultScale.
+  function normalizeHistory(rows, anchorToman, defaultScale) {
+    if (!Array.isArray(rows) || !rows.length) return [];
+    const last = rows[rows.length - 1].y;
+    const scale = anchorToman > 0 ? (last / anchorToman > 5 ? 10 : 1) : (defaultScale > 0 ? defaultScale : (last > 1e8 ? 10 : 1));
+    const f = function (v) { return typeof v === "number" ? v / scale : null; };
+    return rows.map(function (r) { return { y: r.y / scale, o: f(r.o), h: f(r.h), l: f(r.l), label: r.label, t: r.t }; });
+  }
+
+  function sliceRange(rows, days) {
+    if (!Array.isArray(rows) || !(days > 0)) return [];
+    return rows.slice(-(Math.floor(days) + 1));
+  }
+
+  function mergeLive(prev, point, cap) {
+    const limit = cap || LIMITS.maxLive;
+    const list = [];
+    const src = Array.isArray(prev) ? prev : [];
+    for (let i = 0; i < src.length; i++) {
+      const p = src[i];
+      if (isObj(p) && Number.isFinite(p.t) && plausible(p.y)) list.push({ t: p.t, y: p.y });
+    }
+    if (isObj(point) && Number.isFinite(point.t) && plausible(point.y)) list.push({ t: point.t, y: point.y });
+    list.sort(function (a, b) { return a.t - b.t; });
+    const out = [];
+    for (let i = 0; i < list.length; i++) {
+      if (out.length && out[out.length - 1].t === list[i].t) out[out.length - 1] = list[i]; else out.push(list[i]);
+    }
+    return out.slice(-limit);
+  }
+
+  function rangeStats(points) {
+    if (!points || !points.length) return null;
+    let hi = -Infinity, lo = Infinity, sum = 0;
+    for (let i = 0; i < points.length; i++) { const y = points[i].y; if (y > hi) hi = y; if (y < lo) lo = y; sum += y; }
+    const first = points[0].y, last = points[points.length - 1].y;
+    return { hi: hi, lo: lo, avg: sum / points.length, first: first, last: last, changePct: first > 0 ? (last - first) / first * 100 : null };
+  }
+
+  function niceTicks(min, max, n) {
+    if (!(max > min)) return [min];
+    const span = max - min, raw = span / n, p = Math.pow(10, Math.floor(Math.log10(raw)));
+    const step = [1, 2, 2.5, 5, 10].map(function (m) { return m * p; }).find(function (s) { return s >= raw; }) || raw;
+    const out = [];
+    for (let i = Math.ceil(min / step); i * step <= max + step * 1e-9; i++) out.push(i * step);
+    return out;
+  }
+
+  function buildChartModel(points, W, H) {
+    const n = points.length;
+    const m = { l: 8, r: 46, t: 16, b: 28 };
+    const iw = W - m.l - m.r, ih = H - m.t - m.b;
+    let lo = Infinity, hi = -Infinity;
+    for (let i = 0; i < n; i++) { if (points[i].y < lo) lo = points[i].y; if (points[i].y > hi) hi = points[i].y; }
+    const pad = ((hi - lo) || hi * 0.01 || 1) * 0.12;
+    lo -= pad; hi += pad;
+    const r1 = function (v) { return Math.round(v * 10) / 10; };
+    const X = function (i) { return m.l + (n === 1 ? iw / 2 : (i / (n - 1)) * iw); };
+    const Y = function (v) { return m.t + (1 - (v - lo) / (hi - lo)) * ih; };
+    const coords = points.map(function (p, i) { return { x: r1(X(i)), y: r1(Y(p.y)) }; });
+    const line = coords.map(function (c, i) { return (i ? "L" : "M") + c.x + " " + c.y; }).join("");
+    const baseY = r1(m.t + ih);
+    const area = line + "L" + coords[n - 1].x + " " + baseY + "L" + coords[0].x + " " + baseY + "Z";
+    const yTicks = niceTicks(lo, hi, 4).map(function (v) { return { v: v, y: r1(Y(v)) }; });
+    const xIdx = n >= 3 ? [0, Math.floor((n - 1) / 2), n - 1] : n === 2 ? [0, 1] : [0];
+    return { W: W, H: H, m: m, iw: iw, ih: ih, lo: lo, hi: hi, coords: coords, line: line, area: area, baseY: baseY, yTicks: yTicks, xIdx: xIdx };
+  }
+
+  function nearestIndex(model, xSvg) {
+    const n = model.coords.length;
+    if (n < 2) return 0;
+    const f = (xSvg - model.m.l) / model.iw;
+    return Math.max(0, Math.min(n - 1, Math.round(f * (n - 1))));
+  }
+
+  function dayRangePosition(price, low, high) {
+    if (![price, low, high].every(Number.isFinite) || !(high > low)) return null;
+    return Math.max(0, Math.min(1, (price - low) / (high - low)));
+  }
+
+  function ageMinutes(ts, now) { return Number.isFinite(ts) ? (now - ts) / 60000 : null; }
+  function isStale(generatedAt, now) { const a = ageMinutes(generatedAt, now); return a !== null && a > LIMITS.staleMinutes; }
+  function backoff(failures) {
+    if (!(failures > 0)) return LIMITS.pollMs;
+    return Math.min(30000 * Math.pow(2, failures - 1), LIMITS.pollMs);
+  }
+
+  function mkNum(opts) {
+    try { const f = new Intl.NumberFormat("fa-IR", opts); return function (n) { return f.format(n); }; }
+    catch (e) { return function (n) { return toFa(String(Math.round(n * 100) / 100)); }; }
+  }
+  function mkDate(opts) {
+    try {
+      const f = new Intl.DateTimeFormat("fa-IR", Object.assign({ timeZone: "Asia/Tehran" }, opts));
+      return function (ms) { return Number.isFinite(ms) ? f.format(new Date(ms)) : ""; };
+    } catch (e) { return function () { return ""; }; }
+  }
+  const nInt = mkNum({ maximumFractionDigits: 0 });
+  const nDec = mkNum({ maximumFractionDigits: 2 });
+  const fmtTime = mkDate({ hour: "2-digit", minute: "2-digit" });
+  const fmtDateTime = mkDate({ year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" });
+
+  root.G18Core = Object.freeze({
+    SYMBOL: SYMBOL, LIMITS: LIMITS, QUALITY_FA: QUALITY_FA,
+    toFa: toFa, toNum: toNum, plausible: plausible, cleanLabel: cleanLabel, safeParseJSON: safeParseJSON,
+    flattenItems: flattenItems, parseLatest: parseLatest, revalidateLatest: revalidateLatest,
+    parseHistory: parseHistory, revalidateHistory: revalidateHistory, normalizeHistory: normalizeHistory,
+    sliceRange: sliceRange, mergeLive: mergeLive, rangeStats: rangeStats, niceTicks: niceTicks,
+    buildChartModel: buildChartModel, nearestIndex: nearestIndex, dayRangePosition: dayRangePosition,
+    ageMinutes: ageMinutes, isStale: isStale, backoff: backoff,
+    formatToman: function (n) { return nInt(Math.round(n)); },
+    formatDec: function (n) { return nDec(n); },
+    formatMillions: function (v) { return nDec(v / 1e6); },
+    formatTime: fmtTime, formatDateTime: fmtDateTime
+  });
+})(typeof globalThis !== "undefined" ? globalThis : this);
+</script>
+<script id="analytics">
+// ---------------------------------------------------------------------------
+// Analytics: pure functions, no DOM. Everything here describes the past; nothing predicts.
+// ---------------------------------------------------------------------------
+(function (root) {
+  const Core = root.G18Core;
+  const isNum = function (v) { return typeof v === "number" && Number.isFinite(v); };
+
+  // Emami coin: 8.133 g at 900 fineness. Retail 18k gold is 750 fineness.
+  const EMAMI_PURE_GRAMS = 8.133 * 0.9;
+  const EMAMI_IN_18K_GRAMS = EMAMI_PURE_GRAMS / 0.75;
+
+  function sma(y, n) {
+    const out = new Array(y.length).fill(null);
+    if (!(n >= 1) || y.length < n) return out;
+    for (let i = n - 1; i < y.length; i++) {
+      let s = 0;
+      for (let j = i - n + 1; j <= i; j++) s += y[j];
+      out[i] = s / n;
+    }
+    return out;
+  }
+
+  function ema(y, n) {
+    const out = new Array(y.length).fill(null);
+    if (!(n >= 1) || y.length < n) return out;
+    const k = 2 / (n + 1);
+    let prev = 0;
+    for (let i = 0; i < n; i++) prev += y[i];
+    prev /= n;
+    out[n - 1] = prev;
+    for (let i = n; i < y.length; i++) { prev = y[i] * k + prev * (1 - k); out[i] = prev; }
+    return out;
+  }
+
+  function emaNullable(y, n) {
+    let s = 0;
+    while (s < y.length && !isNum(y[s])) s++;
+    const tail = ema(y.slice(s), n);
+    return new Array(s).fill(null).concat(tail);
+  }
+
+  function rsiValue(g, l) {
+    if (g === 0 && l === 0) return 50;
+    if (l === 0) return 100;
+    return 100 - 100 / (1 + g / l);
+  }
+  function rsi(y, n) {
+    n = n || 14;
+    const out = new Array(y.length).fill(null);
+    if (y.length <= n) return out;
+    let g = 0, l = 0;
+    for (let i = 1; i <= n; i++) { const d = y[i] - y[i - 1]; if (d > 0) g += d; else l -= d; }
+    g /= n; l /= n;
+    out[n] = rsiValue(g, l);
+    for (let i = n + 1; i < y.length; i++) {
+      const d = y[i] - y[i - 1];
+      g = (g * (n - 1) + (d > 0 ? d : 0)) / n;
+      l = (l * (n - 1) + (d < 0 ? -d : 0)) / n;
+      out[i] = rsiValue(g, l);
+    }
+    return out;
+  }
+
+  function macd(y, fast, slow, sig) {
+    fast = fast || 12; slow = slow || 26; sig = sig || 9;
+    const ef = ema(y, fast), es = ema(y, slow);
+    const line = y.map(function (_, i) { return isNum(ef[i]) && isNum(es[i]) ? ef[i] - es[i] : null; });
+    const signal = emaNullable(line, sig);
+    const hist = line.map(function (v, i) { return isNum(v) && isNum(signal[i]) ? v - signal[i] : null; });
+    return { line: line, signal: signal, hist: hist };
+  }
+
+  function bollinger(y, n, k) {
+    n = n || 20; k = k == null ? 2 : k;
+    const mid = sma(y, n);
+    const upper = new Array(y.length).fill(null), lower = new Array(y.length).fill(null);
+    const pctB = new Array(y.length).fill(null), width = new Array(y.length).fill(null);
+    for (let i = n - 1; i < y.length; i++) {
+      const m = mid[i];
+      let v = 0;
+      for (let j = i - n + 1; j <= i; j++) v += (y[j] - m) * (y[j] - m);
+      const sd = Math.sqrt(v / n);
+      upper[i] = m + k * sd; lower[i] = m - k * sd;
+      pctB[i] = upper[i] > lower[i] ? (y[i] - lower[i]) / (upper[i] - lower[i]) : null;
+      width[i] = m > 0 ? (upper[i] - lower[i]) / m : null;
+    }
+    return { mid: mid, upper: upper, lower: lower, pctB: pctB, width: width };
+  }
+
+  function hasOHLC(rows, from) {
+    for (let i = Math.max(0, from || 0); i < rows.length; i++) {
+      const r = rows[i];
+      if (!isNum(r.h) || !isNum(r.l) || !isNum(r.o)) return false;
+    }
+    return rows.length > 0;
+  }
+  function atr(rows, n) {
+    n = n || 14;
+    const out = new Array(rows.length).fill(null);
+    if (rows.length <= n || !hasOHLC(rows)) return out;
+    const tr = [null];
+    for (let i = 1; i < rows.length; i++) {
+      const pc = rows[i - 1].y;
+      tr.push(Math.max(rows[i].h - rows[i].l, Math.abs(rows[i].h - pc), Math.abs(rows[i].l - pc)));
+    }
+    let a = 0;
+    for (let i = 1; i <= n; i++) a += tr[i];
+    a /= n;
+    out[n] = a;
+    for (let i = n + 1; i < rows.length; i++) { a = (a * (n - 1) + tr[i]) / n; out[i] = a; }
+    return out;
+  }
+
+  function returns(y) {
+    const out = [];
+    for (let i = 1; i < y.length; i++) out.push(y[i - 1] > 0 ? y[i] / y[i - 1] - 1 : 0);
+    return out;
+  }
+  function stdev(a, sample) {
+    const n = a.length;
+    if (n < (sample ? 2 : 1)) return null;
+    let m = 0; for (let i = 0; i < n; i++) m += a[i];
+    m /= n;
+    let v = 0; for (let i = 0; i < n; i++) v += (a[i] - m) * (a[i] - m);
+    return Math.sqrt(v / (sample ? n - 1 : n));
+  }
+  function rollingStd(r, n) {
+    const out = new Array(r.length).fill(null);
+    for (let i = n - 1; i < r.length; i++) out[i] = stdev(r.slice(i - n + 1, i + 1), true);
+    return out;
+  }
+  function drawdown(y) {
+    const series = [];
+    let peak = -Infinity, peakIdx = 0, maxDd = 0, maxPeak = 0, maxTrough = 0;
+    for (let i = 0; i < y.length; i++) {
+      if (y[i] > peak) { peak = y[i]; peakIdx = i; }
+      const dd = peak > 0 ? y[i] / peak - 1 : 0;
+      series.push(dd);
+      if (dd < maxDd) { maxDd = dd; maxPeak = peakIdx; maxTrough = i; }
+    }
+    return { series: series, max: maxDd, peakIdx: maxPeak, troughIdx: maxTrough, current: series.length ? series[series.length - 1] : null };
+  }
+  function percentileRank(arr, v) {
+    if (!arr.length) return null;
+    let c = 0;
+    for (let i = 0; i < arr.length; i++) if (arr[i] <= v) c++;
+    return c / arr.length;
+  }
+  function pearson(a, b) {
+    const n = Math.min(a.length, b.length);
+    if (n < 3) return null;
+    let ma = 0, mb = 0;
+    for (let i = 0; i < n; i++) { ma += a[i]; mb += b[i]; }
+    ma /= n; mb /= n;
+    let sab = 0, saa = 0, sbb = 0;
+    for (let i = 0; i < n; i++) { const da = a[i] - ma, db = b[i] - mb; sab += da * db; saa += da * da; sbb += db * db; }
+    if (saa === 0 || sbb === 0) return null;
+    return sab / Math.sqrt(saa * sbb);
+  }
+
+  // Match two daily series on their Jalali date label. Order follows the first series.
+  function align(rowsA, rowsB) {
+    const map = new Map();
+    for (let i = 0; i < rowsB.length; i++) if (rowsB[i].label) map.set(rowsB[i].label, rowsB[i]);
+    const labels = [], a = [], b = [];
+    for (let i = 0; i < rowsA.length; i++) {
+      const hit = rowsA[i].label ? map.get(rowsA[i].label) : null;
+      if (hit) { labels.push(rowsA[i].label); a.push(rowsA[i].y); b.push(hit.y); }
+    }
+    return { labels: labels, a: a, b: b };
+  }
+  function deriveRatio(rowsA, rowsB) {
+    const al = align(rowsA, rowsB);
+    return al.labels.map(function (label, i) { return { y: al.b[i] > 0 ? al.a[i] / al.b[i] : null, label: label, t: null }; }).filter(function (r) { return isNum(r.y); });
+  }
+  function deriveBubble(goldRows, coinRows) {
+    const al = align(goldRows, coinRows);
+    return al.labels.map(function (label, i) {
+      const intrinsic = al.a[i] * EMAMI_IN_18K_GRAMS;
+      return { y: intrinsic > 0 ? (al.b[i] / intrinsic - 1) * 100 : null, label: label, t: null, coin: al.b[i], intrinsic: intrinsic };
+    }).filter(function (r) { return isNum(r.y); });
+  }
+
+  function pctChange(y, k) { return y.length > k ? (y[y.length - 1] / y[y.length - 1 - k] - 1) * 100 : null; }
+  function lastN(a, n) { return a.slice(-n); }
+  function lastVal(a) { for (let i = a.length - 1; i >= 0; i--) if (isNum(a[i])) return a[i]; return null; }
+
+  function analyze(rows, opts) {
+    if (!Array.isArray(rows) || rows.length < 30) return null;
+    opts = opts || {};
+    const y = rows.map(function (r) { return r.y; });
+    const n = y.length, last = y[n - 1];
+    const m = { n: n, last: last, lastLabel: rows[n - 1].label };
+
+    m.ret = {};
+    [1, 7, 30, 90, 365].forEach(function (k) { m.ret["d" + k] = pctChange(y, k); });
+
+    const r = returns(y);
+    m.vol = {};
+    [7, 30, 90].forEach(function (w) { const sd = r.length >= w ? stdev(lastN(r, w), true) : null; m.vol["d" + w] = sd == null ? null : sd * 100; });
+    const rs30 = rollingStd(r, 30).filter(isNum).slice(-335);
+    const cur30 = rs30.length ? rs30[rs30.length - 1] : null;
+    m.vol.pct = rs30.length >= 60 && cur30 != null ? percentileRank(rs30, cur30) : null;
+    m.vol.regime = m.vol.pct == null ? null : m.vol.pct < 0.25 ? "low" : m.vol.pct > 0.75 ? "high" : "normal";
+
+    const w365 = lastN(y, 366);
+    const dd = drawdown(w365);
+    m.dd = { current: dd.current * 100, max: dd.max * 100 };
+    m.pos = n >= 60 ? { rank: percentileRank(w365, last), hi: Math.max.apply(null, w365), lo: Math.min.apply(null, w365) } : null;
+
+    m.sma = {};
+    [20, 50, 200].forEach(function (k) { const v = lastVal(sma(y, k)); m.sma["s" + k] = v; m.sma["dist" + k] = v ? (last / v - 1) * 100 : null; });
+    m.trend = m.sma.s50 && m.sma.s200 ? (last > m.sma.s50 && m.sma.s50 > m.sma.s200 ? "up" : last < m.sma.s50 && m.sma.s50 < m.sma.s200 ? "down" : "mixed") : null;
+
+    m.rsi = lastVal(rsi(y, 14));
+    const mc = macd(y);
+    m.macd = { line: lastVal(mc.line), signal: lastVal(mc.signal), hist: lastVal(mc.hist) };
+    const bb = bollinger(y, 20, 2);
+    m.boll = { pctB: lastVal(bb.pctB), widthPct: lastVal(bb.width) == null ? null : lastVal(bb.width) * 100 };
+
+    m.hasOHLC = hasOHLC(rows, 0);
+    // Wilder smoothing depends on where the series starts, so use the full history.
+    const a14 = m.hasOHLC && n >= 75 ? lastVal(atr(rows, 14)) : null;
+    m.atr = a14 == null ? null : { value: a14, pct: a14 / last * 100 };
+
+    const w30 = lastN(y, 31), w90 = lastN(y, 91);
+    m.levels = { low30: Math.min.apply(null, w30), high30: Math.max.apply(null, w30), low90: Math.min.apply(null, w90), high90: Math.max.apply(null, w90) };
+
+    m.usd = null;
+    if (Array.isArray(opts.usdRows) && opts.usdRows.length) {
+      const al = align(rows, opts.usdRows);
+      if (al.labels.length >= 40) {
+        const ratio = al.a.map(function (v, i) { return v / al.b[i]; });
+        const k = Math.min(30, al.labels.length - 1);
+        const gr = returns(al.a), ur = returns(al.b);
+        m.usd = {
+          goldUsd: ratio[ratio.length - 1],
+          goldUsdChg: pctChange(ratio, k), usdChg: pctChange(al.b, k), goldChg: pctChange(al.a, k), days: k,
+          corr30: gr.length >= 30 ? pearson(lastN(gr, 30), lastN(ur, 30)) : null,
+          corr90: gr.length >= 90 ? pearson(lastN(gr, 90), lastN(ur, 90)) : null
+        };
+      }
+    }
+
+    m.bubble = null;
+    if (Array.isArray(opts.coinRows) && opts.coinRows.length) {
+      const b = deriveBubble(rows, opts.coinRows);
+      if (b.length >= 40) {
+        const series = lastN(b.map(function (x) { return x.y; }), 366);
+        const cur = b[b.length - 1];
+        m.bubble = { pct: cur.y, value: cur.coin - cur.intrinsic, rank: series.length >= 60 ? percentileRank(series, cur.y) : null, label: cur.label };
+      }
+    }
+    return m;
+  }
+
+  function summarize(m) {
+    if (!m) return ["داده‌ی کافی برای تحلیل نیست. حداقل ۳۰ روز تاریخچه لازم است."];
+    const f = function (v) { return Core.formatDec(v); };
+    const sg = function (v) { return (v > 0 ? "+" : v < 0 ? "−" : "") + f(Math.abs(v)) + "٪"; };
+    const L = [];
+
+    if (m.ret.d30 != null) {
+      const ddTxt = m.dd.current <= -0.5 ? "و " + f(Math.abs(m.dd.current)) + "٪ پایین‌تر از بیشینه‌ی یک‌ساله‌اش است" : "و نزدیک بیشینه‌ی یک‌ساله‌اش است";
+      L.push("قیمت در ۳۰ روز گذشته " + sg(m.ret.d30) + " تغییر کرده، " + ddTxt + ".");
+    }
+    if (m.pos) L.push("در بازه‌ی یک‌ساله، در " + f(m.pos.rank * 100) + "٪ از روزها قیمت برابر یا پایین‌تر از امروز بوده است.");
+    if (m.sma.s50 != null) {
+      let t = "قیمت " + (m.sma.dist50 >= 0 ? "بالاتر" : "پایین‌تر") + " از میانگین ۵۰ روزه است (" + sg(m.sma.dist50) + ")";
+      if (m.sma.s200 != null) t += " و " + (m.sma.dist200 >= 0 ? "بالاتر" : "پایین‌تر") + " از میانگین ۲۰۰ روزه (" + sg(m.sma.dist200) + ")";
+      const tr = { up: "ساختار روند صعودی است.", down: "ساختار روند نزولی است.", mixed: "ساختار روند مختلط است." }[m.trend];
+      L.push(t + "." + (tr ? " " + tr : ""));
+    }
+    if (m.vol.d30 != null) {
+      const rg = { low: "کم‌نوسان", normal: "متوسط", high: "پرنوسان" }[m.vol.regime];
+      L.push("نوسان روزانه‌ی ۳۰ روز اخیر حدود ±" + f(m.vol.d30) + "٪ است" + (rg ? "؛ نسبت به یک سال گذشته در ردیف «" + rg + "» قرار می‌گیرد." : "."));
+    }
+    if (m.rsi != null) {
+      const zone = m.rsi >= 70 ? "در ناحیه‌ی بالای ۷۰ است که معمولاً «اشباع خرید» خوانده می‌شود" : m.rsi <= 30 ? "در ناحیه‌ی زیر ۳۰ است که معمولاً «اشباع فروش» خوانده می‌شود" : "در محدوده‌ی میانی است";
+      const mh = m.macd.hist == null ? "" : " هیستوگرام MACD " + (m.macd.hist >= 0 ? "مثبت" : "منفی") + " است.";
+      L.push("RSI (۱۴ روزه) برابر " + f(m.rsi) + " و " + zone + "." + mh);
+    }
+    if (m.boll.pctB != null) {
+      L.push(m.boll.pctB > 1 ? "قیمت بالای باند بالایی بولینگر است." : m.boll.pctB < 0 ? "قیمت زیر باند پایینی بولینگر است." : "قیمت داخل باندهای بولینگر است (جایگاه " + f(m.boll.pctB * 100) + "٪ از پایین).");
+    }
+    if (m.usd) {
+      L.push("در " + f(m.usd.days) + " روز گذشته: طلا " + sg(m.usd.goldChg) + "، دلار " + sg(m.usd.usdChg) + " و طلا به دلار " + sg(m.usd.goldUsdChg) + " تغییر کرده است." + (m.usd.corr30 != null ? " همبستگی روزانه با دلار (۳۰ روزه): " + f(m.usd.corr30) + "." : ""));
+    }
+    if (m.bubble) {
+      L.push("حباب تقریبی سکه امامی نسبت به طلای ۱۸ عیار " + sg(m.bubble.pct) + " است" + (m.bubble.rank != null ? " (از " + f(m.bubble.rank * 100) + "٪ روزهای یک سال گذشته بیشتر یا برابر)." : "."));
+    }
+    L.push("این خلاصه فقط توصیف آماری گذشته است و پیش‌بینی یا پیشنهاد معامله نیست.");
+    return L;
+  }
+
+  // ----- alerts -----
+  function validateAlert(input, price) {
+    const dir = input && input.dir;
+    const level = Core.toNum(input && input.level);
+    if (dir !== "above" && dir !== "below") return { ok: false, error: "جهت هشدار نامعتبر است" };
+    if (!Core.plausible(level)) return { ok: false, error: "سطح قیمت نامعتبر است" };
+    if (isNum(price)) {
+      if (dir === "above" && price >= level) return { ok: false, error: "قیمت فعلی همین حالا بالاتر از این سطح است" };
+      if (dir === "below" && price <= level) return { ok: false, error: "قیمت فعلی همین حالا پایین‌تر از این سطح است" };
+    }
+    return { ok: true, alert: { id: "a" + Math.random().toString(36).slice(2, 10), dir: dir, level: level } };
+  }
+  function cleanAlerts(list) {
+    const out = [];
+    for (const a of Array.isArray(list) ? list : []) {
+      if (a && (a.dir === "above" || a.dir === "below") && Core.plausible(a.level) && typeof a.id === "string" && /^[a-z0-9]{3,16}$/.test(a.id)) out.push({ id: a.id, dir: a.dir, level: a.level });
+      if (out.length >= 20) break;
+    }
+    return out;
+  }
+  function evalAlerts(alerts, price) {
+    const triggered = [], remaining = [];
+    for (const a of alerts) {
+      if (isNum(price) && ((a.dir === "above" && price >= a.level) || (a.dir === "below" && price <= a.level))) triggered.push(a); else remaining.push(a);
+    }
+    return { triggered: triggered, remaining: remaining };
+  }
+
+  // ----- export helpers -----
+  function csvCell(v) {
+    if (v == null) return "";
+    if (typeof v === "number") return Number.isFinite(v) ? String(v) : "";
+    let s = String(v);
+    if (/^[=+@\t\r]/.test(s) || (/^-/.test(s) && !/^-\d/.test(s))) s = "'" + s;
+    if (/[",\n\r]/.test(s)) s = '"' + s.replace(/"/g, '""') + '"';
+    return s;
+  }
+  function toCSV(header, rows) {
+    return "﻿" + [header].concat(rows).map(function (r) { return r.map(csvCell).join(","); }).join("\r\n") + "\r\n";
+  }
+
+  // ----- chart geometry -----
+  function pathD(xs, ys) {
+    let d = "", pen = false;
+    for (let i = 0; i < xs.length; i++) {
+      if (!isNum(ys[i]) || !isNum(xs[i])) { pen = false; continue; }
+      d += (pen ? "L" : "M") + (Math.round(xs[i] * 10) / 10) + " " + (Math.round(ys[i] * 10) / 10);
+      pen = true;
+    }
+    return d;
+  }
+  function bandPath(xs, upperY, lowerY) {
+    const idx = [];
+    for (let i = 0; i < xs.length; i++) if (isNum(upperY[i]) && isNum(lowerY[i])) idx.push(i);
+    if (idx.length < 2) return "";
+    let d = "";
+    idx.forEach(function (i, k) { d += (k ? "L" : "M") + (Math.round(xs[i] * 10) / 10) + " " + (Math.round(upperY[i] * 10) / 10); });
+    for (let k = idx.length - 1; k >= 0; k--) d += "L" + (Math.round(xs[idx[k]] * 10) / 10) + " " + (Math.round(lowerY[idx[k]] * 10) / 10);
+    return d + "Z";
+  }
+  function extent(arrays) {
+    let lo = Infinity, hi = -Infinity;
+    for (const a of arrays) for (const v of a) if (isNum(v)) { if (v < lo) lo = v; if (v > hi) hi = v; }
+    return lo <= hi ? { lo: lo, hi: hi } : null;
+  }
+  function xPositions(n, left, width) {
+    const out = [];
+    for (let i = 0; i < n; i++) out.push(left + (n === 1 ? width / 2 : (i / (n - 1)) * width));
+    return out;
+  }
+  function makeScale(lo, hi, top, height, padFrac) {
+    const span = hi - lo || Math.abs(hi) * 0.01 || 1;
+    const p = span * (padFrac == null ? 0.08 : padFrac);
+    const l = lo - p, h = hi + p;
+    return { lo: l, hi: h, Y: function (v) { return top + (1 - (v - l) / (h - l)) * height; } };
+  }
+  function rebase(values) {
+    let base = null;
+    for (const v of values) if (isNum(v) && v !== 0) { base = v; break; }
+    return values.map(function (v) { return isNum(v) && base ? (v / base) * 100 : null; });
+  }
+
+  root.G18A = Object.freeze({
+    EMAMI_PURE_GRAMS: EMAMI_PURE_GRAMS, EMAMI_IN_18K_GRAMS: EMAMI_IN_18K_GRAMS,
+    sma: sma, ema: ema, rsi: rsi, macd: macd, bollinger: bollinger, atr: atr, hasOHLC: hasOHLC,
+    returns: returns, stdev: stdev, rollingStd: rollingStd, drawdown: drawdown, percentileRank: percentileRank, pearson: pearson,
+    align: align, deriveRatio: deriveRatio, deriveBubble: deriveBubble, analyze: analyze, summarize: summarize,
+    validateAlert: validateAlert, cleanAlerts: cleanAlerts, evalAlerts: evalAlerts, csvCell: csvCell, toCSV: toCSV,
+    pathD: pathD, bandPath: bandPath, extent: extent, xPositions: xPositions, makeScale: makeScale, rebase: rebase
+  });
+})(typeof globalThis !== "undefined" ? globalThis : this);
+</script>
+<script id="app">
+"use strict";
+(function () {
+  const C = window.G18Core, A = window.G18A;
+  const $ = function (id) { return document.getElementById(id); };
+  if (!C || !A) { $("statusText").textContent = "بارگذاری برنامه ناموفق بود"; return; }
+
+  const SVGNS = "http://www.w3.org/2000/svg";
+  const FETCH_TIMEOUT = 12000;
+  const HISTORY_TTL = 6 * 3600 * 1000;
+  const RAW = "https://iran-market.github.io/data/";
+  const CDN = "https://cdn.jsdelivr.net/gh/iran-market/iran-market.github.io@main/data/";
+  const LATEST = [RAW + "latest-toman.json", CDN + "latest-toman.json"];
+  const ASSETS = {
+    gold: { label: "طلای ۱۸ عیار", sub: "قیمت هر گرم طلای ۱۸ عیار، به تومان", file: "GOLD_18K_IRR" },
+    coin: { label: "سکه امامی", sub: "قیمت هر سکه‌ی امامی، به تومان", file: "COIN_EMAMI_IRR" },
+    usd: { label: "دلار آزاد", sub: "قیمت هر دلار در بازار آزاد، به تومان", file: "USD_IRR_FREE" },
+    usdt: { label: "تتر", sub: "قیمت هر تتر، به تومان", file: "USDT_IRR" }
+  };
+  const RANGES = { live: "نمودار زنده", "7": "۷ روز اخیر", "30": "۳۰ روز اخیر", "90": "۹۰ روز اخیر", "365": "یک سال اخیر" };
+  const VIEWS = ["price", "candle", "compare"];
+  const has = function (o, k) { return Object.prototype.hasOwnProperty.call(o, k); };
+
+  const store = {
+    get: function (k) { try { const v = localStorage.getItem("g18.v3." + k); return v ? JSON.parse(v) : null; } catch (e) { return null; } },
+    set: function (k, v) { try { localStorage.setItem("g18.v3." + k, JSON.stringify(v)); } catch (e) { /* storage may be unavailable */ } }
+  };
+
+  const p0 = store.get("prefs") || {};
+  const state = {
+    asset: has(ASSETS, p0.asset) ? p0.asset : "gold",
+    range: has(RANGES, p0.range) ? p0.range : "30",
+    view: VIEWS.indexOf(p0.view) >= 0 ? p0.view : "price",
+    ma: p0.ma === true, bb: p0.bb === true, rsi: p0.rsi === true, macd: p0.macd === true,
+    cmp: has(ASSETS, p0.cmp) ? p0.cmp : "usd",
+    hist: {}, histAt: {},
+    latest: C.revalidateLatest(store.get("latest")),
+    live: C.mergeLive(store.get("live"), null),
+    alerts: A.cleanAlerts(store.get("alerts")),
+    loading: false, failures: 0, viaMirror: false, latestOk: false, lastAttempt: 0, timer: null,
+    drawnW: 0, points: 0, cursor: null, view_: null, audio: null
+  };
+  Object.keys(ASSETS).forEach(function (k) {
+    state.hist[k] = C.revalidateHistory(store.get("hist." + k));
+    const at = store.get("histAt." + k);
+    state.histAt[k] = typeof at === "number" && Number.isFinite(at) ? at : 0;
+  });
+  const pendingHist = {};
+  const memo = {};
+
+  const logLines = [];
+  function log(msg) {
+    logLines.push(new Date().toLocaleTimeString("en-GB") + "  " + msg);
+    if (logLines.length > 30) logLines.shift();
+    $("diag").textContent = logLines.join("\n");
+  }
+  function savePrefs() {
+    store.set("prefs", { asset: state.asset, range: state.range, view: state.view, ma: state.ma, bb: state.bb, rsi: state.rsi, macd: state.macd, cmp: state.cmp });
+  }
+
+  function svgEl(tag, attrs, text) {
+    const e = document.createElementNS(SVGNS, tag);
+    for (const k in attrs) e.setAttribute(k, String(attrs[k]));
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function htmlEl(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  // ---------------- network ----------------
+  async function fetchText(url) {
+    const ctl = new AbortController();
+    const timer = setTimeout(function () { ctl.abort(); }, FETCH_TIMEOUT);
+    const t0 = performance.now();
+    try {
+      const r = await fetch(url, { cache: "no-cache", credentials: "omit", referrerPolicy: "no-referrer", signal: ctl.signal });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const len = Number(r.headers.get("content-length"));
+      if (len > C.LIMITS.maxBytes) throw new Error("پاسخ بیش‌ازحد بزرگ است");
+      const text = await r.text();
+      return { text: text, ms: Math.round(performance.now() - t0) };
+    } finally { clearTimeout(timer); }
+  }
+  async function fetchFirst(name, urls, parse) {
+    for (let i = 0; i < urls.length; i++) {
+      const host = new URL(urls[i]).host;
+      try {
+        const res = await fetchText(urls[i]);
+        const j = C.safeParseJSON(res.text);
+        if (!j.ok) throw new Error(j.error);
+        const p = parse(j.value);
+        if (!p.ok) throw new Error(p.error);
+        log(name + " ok · " + host + " · " + res.ms + "ms");
+        return { ok: true, value: p.value, mirror: i > 0 };
+      } catch (e) {
+        log(name + " FAIL · " + host + " · " + (e && e.name === "AbortError" ? "timeout" : (e && e.message) || "error"));
+      }
+    }
+    return { ok: false };
+  }
+  function loadHistory(asset, force) {
+    if (!force && state.hist[asset] && Date.now() - state.histAt[asset] < HISTORY_TTL) return Promise.resolve();
+    if (pendingHist[asset]) return pendingHist[asset];
+    const f = ASSETS[asset].file;
+    pendingHist[asset] = fetchFirst("history:" + asset, [RAW + "history/" + f + ".json", CDN + "history/" + f + ".json"], C.parseHistory).then(function (res) {
+      if (res.ok) {
+        state.hist[asset] = res.value; state.histAt[asset] = Date.now();
+        store.set("hist." + asset, res.value); store.set("histAt." + asset, state.histAt[asset]);
+      }
+    }).finally(function () { delete pendingHist[asset]; });
+    return pendingHist[asset];
+  }
+  function cmpTarget() {
+    if (state.cmp !== state.asset) return state.cmp;
+    return Object.keys(ASSETS).filter(function (k) { return k !== state.asset; })[0];
+  }
+  function neededAssets() {
+    const s = ["gold"];
+    function add(k) { if (s.indexOf(k) < 0) s.push(k); }
+    add(state.asset);
+    if (state.asset === "gold") { add("usd"); add("coin"); }
+    if (state.view === "compare") add(cmpTarget());
+    return s;
+  }
+  function loadNeeded() {
+    return Promise.all(neededAssets().map(function (a) { return loadHistory(a, false); })).then(renderAll);
+  }
+
+  async function refresh() {
+    if (state.loading) return;
+    state.loading = true;
+    state.lastAttempt = Date.now();
+    $("refresh").disabled = true;
+    renderStatus();
+    const results = await Promise.all([
+      fetchFirst("latest", LATEST, C.parseLatest),
+      Promise.all(neededAssets().map(function (a) { return loadHistory(a, false); }))
+    ]);
+    const l = results[0];
+    if (l.ok) {
+      state.latest = l.value;
+      state.viaMirror = l.mirror;
+      store.set("latest", l.value);
+      const t = l.value.itemTime || l.value.generatedAt || Date.now();
+      state.live = C.mergeLive(state.live, { t: t, y: l.value.price });
+      store.set("live", state.live);
+      checkAlerts(l.value.price);
+    }
+    state.latestOk = l.ok;
+    state.failures = l.ok ? 0 : state.failures + 1;
+    state.loading = false;
+    $("refresh").disabled = false;
+    renderAll();
+    schedule();
+  }
+  function schedule() {
+    clearTimeout(state.timer);
+    state.timer = setTimeout(function () { if (document.hidden) schedule(); else refresh(); }, C.backoff(state.failures));
+  }
+
+  // ---------------- data access ----------------
+  function rowsOf(asset) {
+    const h = state.hist[asset];
+    if (!h) return [];
+    const anchor = asset === "gold" && state.latest ? state.latest.price : null;
+    const m = memo[asset];
+    if (m && m.h === h && m.a === anchor) return m.rows;
+    const rows = C.normalizeHistory(h, anchor, 10);
+    memo[asset] = { h: h, a: anchor, rows: rows };
+    return rows;
+  }
+  function effRange() { return state.range === "live" && state.asset !== "gold" ? "30" : state.range; }
+
+  // ---------------- status + hero ----------------
+  function computeStatus() {
+    const l = state.latest;
+    const haveAny = !!l || Object.keys(state.hist).some(function (k) { return !!state.hist[k]; });
+    if (state.loading) return ["load", "در حال دریافت…"];
+    if (!haveAny) return ["err", "اتصال برقرار نشد"];
+    if (!l) return ["cache", "فقط داده‌ی تاریخی"];
+    if (!state.latestOk) return ["cache", navigator.onLine === false ? "آفلاین، داده‌ی ذخیره‌شده" : "داده‌ی ذخیره‌شده"];
+    if (l.stale || C.isStale(l.generatedAt, Date.now())) return ["stale", "داده قدیمی است"];
+    return ["ok", l.generatedAt ? "به‌روز، " + C.formatTime(l.generatedAt) : "به‌روز"];
+  }
+  function renderStatus() {
+    const s = computeStatus();
+    $("status").dataset.state = s[0];
+    $("statusText").textContent = s[1];
+  }
+  function setChg(pct, amt) {
+    const chg = $("chg");
+    if (pct !== null && pct !== undefined) {
+      chg.className = "chg " + (pct > 0 ? "up" : pct < 0 ? "down" : "flat");
+      chg.textContent = (pct > 0 ? "▲ " : pct < 0 ? "▼ " : "") + C.formatDec(Math.abs(pct)) + "٪";
+    } else { chg.className = "chg flat"; chg.textContent = ""; }
+    $("chgAmt").textContent = amt !== null && amt !== undefined ? C.formatToman(Math.abs(amt)) + " تومان نسبت به روز قبل" : "";
+  }
+  function renderHero() {
+    $("subtitle").textContent = ASSETS[state.asset].sub;
+    const badges = $("badges");
+    badges.replaceChildren();
+    const dr = $("dayRange");
+    if (state.asset === "gold") {
+      const l = state.latest;
+      $("kicker").textContent = "قیمت لحظه‌ای";
+      $("price").textContent = l ? C.formatToman(l.price) : "—";
+      setChg(l ? l.pct : null, l ? l.change : null);
+      if (l) {
+        if (l.stale) badges.appendChild(htmlEl("span", "badge", C.QUALITY_FA.stale));
+        for (let i = 0; i < l.quality.length; i++) {
+          const fa = C.QUALITY_FA[l.quality[i]];
+          if (fa && !(l.stale && l.quality[i] === "stale")) badges.appendChild(htmlEl("span", "badge", fa));
+        }
+        if (state.viaMirror) badges.appendChild(htmlEl("span", "badge", "منبع جایگزین؛ ممکن است تأخیر داشته باشد"));
+      }
+      const pos = l ? C.dayRangePosition(l.price, l.low, l.high) : null;
+      if (pos === null || pos === undefined) dr.hidden = true;
+      else {
+        dr.hidden = false;
+        $("drLow").textContent = C.formatToman(l.low);
+        $("drHigh").textContent = C.formatToman(l.high);
+        $("drMark").style.left = (pos * 100).toFixed(1) + "%";
+      }
+      $("updated").textContent = l && l.itemTime ? "آخرین قیمت ثبت‌شده: " + C.formatDateTime(l.itemTime) + " (به وقت تهران)" : "";
+    } else {
+      const rows = rowsOf(state.asset);
+      dr.hidden = true;
+      $("kicker").textContent = "آخرین بسته‌ی روزانه";
+      if (rows.length >= 2) {
+        const a = rows[rows.length - 1], b = rows[rows.length - 2];
+        $("price").textContent = C.formatToman(a.y);
+        setChg(b.y > 0 ? (a.y / b.y - 1) * 100 : null, a.y - b.y);
+        $("updated").textContent = "آخرین روز ثبت‌شده: " + C.toFa(a.label);
+      } else {
+        $("price").textContent = "—"; setChg(null, null); $("updated").textContent = "";
+      }
+    }
+  }
+
+  // ---------------- chart view model ----------------
+  function axisFor(hi) {
+    if (hi >= 1e6) return { f: function (v) { return C.formatDec(v / 1e6); }, unit: "میلیون تومان" };
+    if (hi >= 1e3) return { f: function (v) { return C.formatDec(v / 1e3); }, unit: "هزار تومان" };
+    return { f: function (v) { return C.formatDec(v); }, unit: "تومان" };
+  }
+  function sl(arr, s) { return arr.slice(s); }
+
+  function buildView() {
+    const rng = effRange();
+    if (rng === "live") {
+      const pts = state.live.map(function (p) { return { y: p.y, label: C.formatTime(p.t), t: p.t }; });
+      if (pts.length < 2) return null;
+      const ys = pts.map(function (p) { return p.y; });
+      const ax = axisFor(Math.max.apply(null, ys));
+      return { kind: "price", n: pts.length, labels: pts.map(function (p) { return p.label; }), main: ys, area: true, axis: ax, extentArrays: [ys],
+        tip: function (i) { return pts[i].label + " | " + C.formatToman(ys[i]) + " تومان"; }, aria: "نمودار زنده", stats: ys, live: true };
+    }
+    const K = Number(rng);
+    const rows = rowsOf(state.asset);
+    if (rows.length < 2) return null;
+    const n = rows.length, start = Math.max(0, n - (K + 1));
+
+    if (state.view === "compare") {
+      const other = cmpTarget();
+      const al = A.align(rows, rowsOf(other));
+      if (al.labels.length < 2) return { error: "برای مقایسه، داده‌ی مشترک کافی نیست." };
+      const s = Math.max(0, al.labels.length - (K + 1));
+      const labels = al.labels.slice(s), a = A.rebase(al.a.slice(s)), b = A.rebase(al.b.slice(s));
+      const nm = ASSETS[state.asset].label, nb = ASSETS[other].label;
+      const pc = function (v) { return (v >= 100 ? "+" : "−") + C.formatDec(Math.abs(v - 100)) + "٪"; };
+      return { kind: "compare", n: labels.length, labels: labels.map(C.toFa), main: a, second: b, nameA: nm, nameB: nb,
+        axis: { f: function (v) { return C.formatDec(v); }, unit: "شاخص (شروع = ۱۰۰)" }, extentArrays: [a, b],
+        tip: function (i) { return C.toFa(labels[i]) + " | " + nm + " " + pc(a[i]) + " | " + nb + " " + pc(b[i]); },
+        aria: "مقایسه‌ی " + nm + " و " + nb, stats: null };
+    }
+
+    const y = rows.map(function (r) { return r.y; });
+    const slice = rows.slice(start);
+    const ys = sl(y, start);
+    const labels = slice.map(function (r) { return C.toFa(r.label); });
+    const V = { kind: "price", n: slice.length, labels: labels, main: ys, axis: null, extentArrays: [ys], stats: ys, area: true };
+    if (state.view === "candle") {
+      if (A.hasOHLC(slice, 0)) { V.kind = "candle"; V.candles = slice; V.extentArrays = [slice.map(function (r) { return r.h; }), slice.map(function (r) { return r.l; })]; V.area = false; }
+      else V.note = "برای این دارایی داده‌ی باز، بالا و پایین در منبع نیست؛ نمودار قیمت پایانی نشان داده شده است.";
+    }
+    if (state.ma) { V.ma1 = sl(A.sma(y, 20), start); V.ma2 = sl(A.sma(y, 50), start); V.extentArrays.push(V.ma1, V.ma2); }
+    if (state.bb) { const b = A.bollinger(y, 20, 2); V.bbU = sl(b.upper, start); V.bbL = sl(b.lower, start); V.extentArrays.push(V.bbU, V.bbL); }
+    if (state.rsi) V.rsi = sl(A.rsi(y, 14), start);
+    if (state.macd) { const m = A.macd(y); V.macd = { line: sl(m.line, start), signal: sl(m.signal, start), hist: sl(m.hist, start) }; }
+    V.axis = axisFor(Math.max.apply(null, V.extentArrays.map(function (a) { return A.extent([a]) ? A.extent([a]).hi : 0; })));
+    V.tip = function (i) {
+      let t = labels[i];
+      if (V.kind === "candle") { const r = slice[i]; t += " | باز " + C.formatToman(r.o) + " | بالا " + C.formatToman(r.h) + " | پایین " + C.formatToman(r.l) + " | بسته " + C.formatToman(r.y); }
+      else t += " | " + C.formatToman(ys[i]) + " تومان";
+      if (V.rsi && typeof V.rsi[i] === "number") t += " | RSI " + C.formatDec(V.rsi[i]);
+      return t;
+    };
+    V.aria = "نمودار " + ASSETS[state.asset].label;
+    return V;
+  }
+
+  function renderLegend(V) {
+    const lg = $("legend");
+    lg.replaceChildren();
+    function item(cls, text) { const s = htmlEl("span"); s.appendChild(htmlEl("i", "sw " + cls)); s.appendChild(document.createTextNode(text)); lg.appendChild(s); }
+    if (!V || V.error) return;
+    if (V.kind === "compare") { item("", V.nameA); item("b", V.nameB); return; }
+    if (V.kind === "candle") { item("up", "صعودی"); item("down", "نزولی"); } else item("", "قیمت");
+    if (V.ma1) { item("b", "میانگین ۲۰ روزه"); item("c", "میانگین ۵۰ روزه"); }
+    if (V.bbU) item("band", "باند بولینگر");
+  }
+
+  function emptyMessage(V) {
+    if (V && V.error) return V.error;
+    if (effRange() === "live") return "نمودار زنده با هر انتشار قیمت جدید (هر ۳۰ دقیقه) در همین مرورگر کامل می‌شود. بعداً دوباره سر بزن.";
+    if (state.loading || Object.keys(pendingHist).length) return "در حال دریافت داده…";
+    return "داده‌ای برای نمایش نیست. دکمه‌ی «به‌روزرسانی» را بزن و در «جزئیات اتصال» وضعیت را ببین.";
+  }
+
+  function drawChart() {
+    const box = $("chartBox");
+    box.replaceChildren();
+    state.view_ = null;
+    const V = buildView();
+    renderLegend(V);
+    const note = $("chartNote");
+    note.hidden = !(V && V.note);
+    note.textContent = V && V.note ? V.note : "";
+    if (!V || V.error || V.n < 2) {
+      state.points = 0;
+      $("capUnit").textContent = "";
+      box.appendChild(htmlEl("div", "empty", emptyMessage(V)));
+      return;
+    }
+    state.points = V.n;
+    $("capUnit").textContent = V.axis.unit;
+    const n = V.n;
+    const W = Math.max(260, Math.floor(box.clientWidth) || 320);
+    const ML = 8, MR = 48, MT = 14, MB = 26, iw = W - ML - MR;
+    const mainH = Math.round(Math.min(300, Math.max(190, W * 0.52)));
+    const subs = [];
+    if (V.rsi) subs.push({ k: "rsi", h: 70 });
+    if (V.macd) subs.push({ k: "macd", h: 84 });
+    let H = MT + mainH;
+    subs.forEach(function (s) { s.top = H + 20; H = s.top + s.h; });
+    H += MB;
+    const bottom = H - MB;
+
+    const ext = A.extent(V.extentArrays);
+    const sc = A.makeScale(ext.lo, ext.hi, MT, mainH, 0.08);
+    const xs = A.xPositions(n, ML, iw);
+    const svg = svgEl("svg", { viewBox: "0 0 " + W + " " + H, width: W, height: H, role: "img",
+      "aria-label": V.aria + ", " + RANGES[effRange()] + (state.ma || state.bb || state.rsi || state.macd ? " با اندیکاتور" : "") });
+    const defs = svgEl("defs", {});
+    const grad = svgEl("linearGradient", { id: "areaGrad", x1: 0, y1: 0, x2: 0, y2: 1 });
+    grad.appendChild(svgEl("stop", { offset: 0, class: "area-top" }));
+    grad.appendChild(svgEl("stop", { offset: 1, class: "area-bot" }));
+    defs.appendChild(grad);
+    svg.appendChild(defs);
+
+    C.niceTicks(sc.lo, sc.hi, 4).forEach(function (v) {
+      const y = Math.round(sc.Y(v) * 10) / 10;
+      svg.appendChild(svgEl("line", { class: "grid", x1: ML, x2: ML + iw, y1: y, y2: y }));
+      svg.appendChild(svgEl("text", { class: "axis", x: W - 4, y: y + 4, "text-anchor": "end" }, V.axis.f(v)));
+    });
+    const ymap = function (arr) { return arr.map(function (v) { return typeof v === "number" ? sc.Y(v) : null; }); };
+
+    if (V.bbU) {
+      svg.appendChild(svgEl("path", { class: "bbband", d: A.bandPath(xs, ymap(V.bbU), ymap(V.bbL)) }));
+      svg.appendChild(svgEl("path", { class: "bbline", d: A.pathD(xs, ymap(V.bbU)) }));
+      svg.appendChild(svgEl("path", { class: "bbline", d: A.pathD(xs, ymap(V.bbL)) }));
+    }
+    if (V.kind === "price" && V.area) {
+      const mainY = ymap(V.main);
+      const lineD = A.pathD(xs, mainY);
+      const base = Math.round((MT + mainH) * 10) / 10;
+      svg.appendChild(svgEl("path", { d: lineD + "L" + Math.round(xs[n - 1] * 10) / 10 + " " + base + "L" + Math.round(xs[0] * 10) / 10 + " " + base + "Z", fill: "url(#areaGrad)" }));
+    }
+    if (V.kind === "candle") {
+      const bw = Math.max(1, Math.min(10, (iw / n) * 0.62));
+      V.candles.forEach(function (r, i) {
+        const up = r.y >= r.o, cls = up ? "up" : "down";
+        const x = Math.round(xs[i] * 10) / 10;
+        svg.appendChild(svgEl("line", { class: "wick-" + cls, x1: x, x2: x, y1: Math.round(sc.Y(r.h) * 10) / 10, y2: Math.round(sc.Y(r.l) * 10) / 10 }));
+        const yo = sc.Y(r.o), yc = sc.Y(r.y);
+        svg.appendChild(svgEl("rect", { class: "c" + cls, x: Math.round((x - bw / 2) * 10) / 10, y: Math.round(Math.min(yo, yc) * 10) / 10, width: Math.round(bw * 10) / 10, height: Math.max(1, Math.round(Math.abs(yo - yc) * 10) / 10) }));
+      });
+    } else {
+      svg.appendChild(svgEl("path", { class: "line", d: A.pathD(xs, ymap(V.main)) }));
+    }
+    if (V.kind === "compare") svg.appendChild(svgEl("path", { class: "cmpb", d: A.pathD(xs, ymap(V.second)) }));
+    if (V.ma1) {
+      svg.appendChild(svgEl("path", { class: "ma1", d: A.pathD(xs, ymap(V.ma1)) }));
+      svg.appendChild(svgEl("path", { class: "ma2", d: A.pathD(xs, ymap(V.ma2)) }));
+    }
+    const lastIdx = n - 1;
+    const lastVal = V.kind === "candle" ? V.candles[lastIdx].y : V.main[lastIdx];
+    svg.appendChild(svgEl("circle", { class: "last", cx: Math.round(xs[lastIdx] * 10) / 10, cy: Math.round(sc.Y(lastVal) * 10) / 10, r: 4 }));
+
+    subs.forEach(function (s) {
+      const top = s.top, h = s.h;
+      if (s.k === "rsi") {
+        const Y = function (v) { return top + (1 - v / 100) * h; };
+        [30, 70].forEach(function (g) {
+          svg.appendChild(svgEl("line", { class: "guide", x1: ML, x2: ML + iw, y1: Y(g), y2: Y(g) }));
+          svg.appendChild(svgEl("text", { class: "axis", x: W - 4, y: Y(g) + 4, "text-anchor": "end" }, C.toFa(g)));
+        });
+        svg.appendChild(svgEl("path", { class: "p-rsi", d: A.pathD(xs, V.rsi.map(function (v) { return typeof v === "number" ? Y(v) : null; })) }));
+        let lv = null; for (let i = V.rsi.length - 1; i >= 0; i--) if (typeof V.rsi[i] === "number") { lv = V.rsi[i]; break; }
+        svg.appendChild(svgEl("text", { class: "panel-title", x: ML + 2, y: top - 6 }, "RSI ۱۴" + (lv === null ? "" : ": " + C.formatDec(lv))));
+      } else {
+        const e = A.extent([V.macd.line, V.macd.signal, V.macd.hist, [0]]);
+        if (!e) return;
+        const ms = A.makeScale(e.lo, e.hi, top, h, 0.1);
+        const zy = Math.round(ms.Y(0) * 10) / 10;
+        svg.appendChild(svgEl("line", { class: "zero", x1: ML, x2: ML + iw, y1: zy, y2: zy }));
+        const bw = Math.max(1, Math.min(8, (iw / n) * 0.6));
+        V.macd.hist.forEach(function (v, i) {
+          if (typeof v !== "number") return;
+          const y = ms.Y(v);
+          svg.appendChild(svgEl("rect", { class: v >= 0 ? "hist-up" : "hist-down", x: Math.round((xs[i] - bw / 2) * 10) / 10, y: Math.round(Math.min(y, ms.Y(0)) * 10) / 10, width: Math.round(bw * 10) / 10, height: Math.max(0.5, Math.round(Math.abs(y - ms.Y(0)) * 10) / 10) }));
+        });
+        svg.appendChild(svgEl("path", { class: "p-macd", d: A.pathD(xs, V.macd.line.map(function (v) { return typeof v === "number" ? ms.Y(v) : null; })) }));
+        svg.appendChild(svgEl("path", { class: "p-sig", d: A.pathD(xs, V.macd.signal.map(function (v) { return typeof v === "number" ? ms.Y(v) : null; })) }));
+        svg.appendChild(svgEl("text", { class: "panel-title", x: ML + 2, y: top - 6 }, "MACD (۱۲، ۲۶، ۹)"));
+      }
+    });
+
+    const xi = n >= 3 ? [0, Math.floor((n - 1) / 2), n - 1] : [0, n - 1];
+    xi.forEach(function (i, k) {
+      svg.appendChild(svgEl("text", { class: "axis", x: Math.round(xs[i] * 10) / 10, y: H - 8, "text-anchor": k === 0 ? "start" : k === xi.length - 1 ? "end" : "middle" }, V.labels[i]));
+    });
+
+    const cursor = svgEl("line", { class: "cursor", y1: MT, y2: bottom, visibility: "hidden" });
+    const dot = svgEl("circle", { class: "cursor-dot", r: 4.5, visibility: "hidden" });
+    svg.appendChild(cursor);
+    svg.appendChild(dot);
+    const hit = svgEl("rect", { class: "hit", x: ML, y: MT, width: iw, height: bottom - MT, tabindex: 0, role: "application", "aria-label": "مرور نقاط نمودار با کلیدهای جهت‌نما" });
+    svg.appendChild(hit);
+    box.appendChild(svg);
+    const tip = htmlEl("div", "tip");
+    tip.hidden = true;
+    box.appendChild(tip);
+    state.drawnW = W;
+    state.view_ = V;
+
+    function yAt(i) { return V.kind === "candle" ? sc.Y(V.candles[i].y) : sc.Y(V.main[i]); }
+    function show(i, speak) {
+      state.cursor = i;
+      const x = Math.round(xs[i] * 10) / 10;
+      cursor.setAttribute("x1", x); cursor.setAttribute("x2", x); cursor.setAttribute("visibility", "visible");
+      dot.setAttribute("cx", x); dot.setAttribute("cy", yAt(i)); dot.setAttribute("visibility", "visible");
+      const text = V.tip(i);
+      tip.hidden = false;
+      tip.textContent = text;
+      const half = tip.offsetWidth / 2;
+      tip.style.left = Math.max(half, Math.min(box.clientWidth - half, (x / W) * box.clientWidth)) + "px";
+      if (speak) $("sr").textContent = text;
+    }
+    function hide() { cursor.setAttribute("visibility", "hidden"); dot.setAttribute("visibility", "hidden"); tip.hidden = true; state.cursor = null; }
+    let raf = 0;
+    function onPointer(ev) {
+      if (raf) return;
+      const cx = ev.clientX;
+      raf = requestAnimationFrame(function () {
+        raf = 0;
+        const r = svg.getBoundingClientRect();
+        if (!r.width) return;
+        const f = (((cx - r.left) / r.width) * W - ML) / iw;
+        show(Math.max(0, Math.min(n - 1, Math.round(f * (n - 1)))), false);
+      });
+    }
+    hit.addEventListener("pointermove", onPointer);
+    hit.addEventListener("pointerdown", onPointer);
+    hit.addEventListener("pointerleave", hide);
+    hit.addEventListener("blur", hide);
+    hit.addEventListener("keydown", function (ev) {
+      let i = state.cursor === null ? n - 1 : state.cursor;
+      if (ev.key === "ArrowLeft") i = Math.max(0, i - 1);
+      else if (ev.key === "ArrowRight") i = Math.min(n - 1, i + 1);
+      else if (ev.key === "Home") i = 0;
+      else if (ev.key === "End") i = n - 1;
+      else if (ev.key === "Escape") { hide(); return; }
+      else return;
+      ev.preventDefault();
+      show(i, true);
+    });
+  }
+
+  // ---------------- stats + analysis ----------------
+  function renderStats() {
+    const box = $("stats");
+    box.replaceChildren();
+    const V = state.view_;
+    const s = V && V.stats ? C_stats(V.stats) : null;
+    box.hidden = !s;
+    if (!s) return;
+    function stat(value, label, cls) {
+      const d = htmlEl("div", "stat");
+      d.appendChild(htmlEl("b", cls || "", value));
+      d.appendChild(htmlEl("span", "", label));
+      box.appendChild(d);
+    }
+    stat(C.formatToman(s.hi), "بیشترین (تومان)");
+    stat(C.formatToman(s.lo), "کمترین (تومان)");
+    stat(C.formatToman(s.avg), "میانگین (تومان)");
+    if (s.changePct !== null) stat((s.changePct > 0 ? "▲ " : s.changePct < 0 ? "▼ " : "") + C.formatDec(Math.abs(s.changePct)) + "٪", "تغییر در بازه", s.changePct > 0 ? "up" : s.changePct < 0 ? "down" : "");
+  }
+  function C_stats(ys) { return C.rangeStats(ys.map(function (y) { return { y: y }; })); }
+
+  function sg(v) { return v === null || v === undefined ? "—" : (v > 0 ? "+" : v < 0 ? "−" : "") + C.formatDec(Math.abs(v)) + "٪"; }
+  function cls(v) { return v > 0 ? "up" : v < 0 ? "down" : ""; }
+
+  function renderAnalysis() {
+    const rows = rowsOf(state.asset);
+    const extras = {};
+    if (state.asset === "gold") { extras.usdRows = rowsOf("usd"); extras.coinRows = rowsOf("coin"); }
+    const m = A.analyze(rows, extras);
+    const ul = $("summary"), mt = $("metrics");
+    ul.replaceChildren(); mt.replaceChildren();
+    A.summarize(m).forEach(function (t) { ul.appendChild(htmlEl("li", "", t)); });
+    if (!m) return;
+    function group(title, items) {
+      const list = items.filter(function (x) { return x[1] !== null && x[1] !== undefined; });
+      if (!list.length) return;
+      mt.appendChild(htmlEl("h3", "", title));
+      const g = htmlEl("div", "mgrid");
+      list.forEach(function (x) {
+        const d = htmlEl("div", "m");
+        d.appendChild(htmlEl("b", x[2] || "", x[1]));
+        d.appendChild(htmlEl("span", "", x[0]));
+        g.appendChild(d);
+      });
+      mt.appendChild(g);
+    }
+    const rg = { low: "کم‌نوسان", normal: "متوسط", high: "پرنوسان" };
+    group("بازده", [["۷ روز", sg(m.ret.d7), cls(m.ret.d7)], ["۳۰ روز", sg(m.ret.d30), cls(m.ret.d30)], ["۹۰ روز", sg(m.ret.d90), cls(m.ret.d90)], ["۳۶۵ روز", m.ret.d365 === null ? null : sg(m.ret.d365), cls(m.ret.d365)]]);
+    group("ریسک و نوسان", [
+      ["نوسان روزانه ۷ روزه", m.vol.d7 === null ? null : "±" + C.formatDec(m.vol.d7) + "٪"],
+      ["نوسان روزانه ۳۰ روزه", m.vol.d30 === null ? null : "±" + C.formatDec(m.vol.d30) + "٪"],
+      ["نوسان روزانه ۹۰ روزه", m.vol.d90 === null ? null : "±" + C.formatDec(m.vol.d90) + "٪"],
+      ["وضعیت نوسان نسبت به یک سال", m.vol.regime ? rg[m.vol.regime] : null],
+      ["افت فعلی از قله", sg(m.dd.current), cls(m.dd.current)],
+      ["بیشینه‌ی افت یک‌ساله", sg(m.dd.max), cls(m.dd.max)],
+      ["ATR ۱۴ روزه", m.atr ? C.formatToman(m.atr.value) + " (" + C.formatDec(m.atr.pct) + "٪)" : null]
+    ]);
+    group("روند و شتاب", [
+      ["فاصله از میانگین ۵۰ روزه", m.sma.dist50 === null ? null : sg(m.sma.dist50), cls(m.sma.dist50)],
+      ["فاصله از میانگین ۲۰۰ روزه", m.sma.dist200 === null ? null : sg(m.sma.dist200), cls(m.sma.dist200)],
+      ["ساختار روند", m.trend ? { up: "صعودی", down: "نزولی", mixed: "مختلط" }[m.trend] : null],
+      ["RSI ۱۴ روزه", m.rsi === null ? null : C.formatDec(m.rsi)],
+      ["هیستوگرام MACD", m.macd.hist === null ? null : (m.macd.hist >= 0 ? "مثبت" : "منفی"), m.macd.hist >= 0 ? "up" : "down"],
+      ["جایگاه در باند بولینگر", m.boll.pctB === null ? null : C.formatDec(m.boll.pctB * 100) + "٪"]
+    ]);
+    group("سطوح قیمتی", [
+      ["کمترین ۳۰ روز", C.formatToman(m.levels.low30)], ["بیشترین ۳۰ روز", C.formatToman(m.levels.high30)],
+      ["کمترین ۹۰ روز", C.formatToman(m.levels.low90)], ["بیشترین ۹۰ روز", C.formatToman(m.levels.high90)]
+    ]);
+    if (m.usd || m.bubble) {
+      group("ارتباط با بازار", [
+        ["طلا به دلار (دلار برای هر گرم)", m.usd ? C.formatDec(m.usd.goldUsd) : null],
+        ["تغییر طلا به دلار", m.usd ? sg(m.usd.goldUsdChg) : null, m.usd ? cls(m.usd.goldUsdChg) : ""],
+        ["همبستگی با دلار، ۳۰ روزه", m.usd && m.usd.corr30 !== null ? C.formatDec(m.usd.corr30) : null],
+        ["همبستگی با دلار، ۹۰ روزه", m.usd && m.usd.corr90 !== null ? C.formatDec(m.usd.corr90) : null],
+        ["حباب تقریبی سکه امامی", m.bubble ? sg(m.bubble.pct) : null, m.bubble ? cls(m.bubble.pct) : ""],
+        ["مقدار حباب (تومان)", m.bubble ? C.formatToman(m.bubble.value) : null]
+      ]);
+    }
+  }
+
+  // ---------------- alerts ----------------
+  function renderAlerts() {
+    const ul = $("alertList");
+    ul.replaceChildren();
+    state.alerts.forEach(function (a) {
+      const li = htmlEl("li");
+      li.appendChild(htmlEl("span", "", (a.dir === "above" ? "بالاتر از " : "پایین‌تر از ") + C.formatToman(a.level) + " تومان"));
+      const b = htmlEl("button", "btn", "حذف");
+      b.type = "button";
+      b.dataset.id = a.id;
+      b.setAttribute("aria-label", "حذف هشدار " + C.formatToman(a.level));
+      li.appendChild(b);
+      ul.appendChild(li);
+    });
+  }
+  function beep() {
+    try {
+      if (state.audio) {
+        const o = state.audio.createOscillator(), g = state.audio.createGain();
+        o.connect(g); g.connect(state.audio.destination);
+        o.frequency.value = 880; g.gain.value = 0.08;
+        o.start(); o.stop(state.audio.currentTime + 0.25);
+      }
+      if (navigator.vibrate) navigator.vibrate([150, 80, 150]);
+    } catch (e) { /* sound is optional */ }
+  }
+  function checkAlerts(price) {
+    if (!state.alerts.length) return;
+    const r = A.evalAlerts(state.alerts, price);
+    if (!r.triggered.length) return;
+    state.alerts = r.remaining;
+    store.set("alerts", state.alerts);
+    const text = r.triggered.map(function (a) { return "قیمت به " + (a.dir === "above" ? "بالاتر از " : "پایین‌تر از ") + C.formatToman(a.level) + " تومان رسید (اکنون " + C.formatToman(price) + ")"; }).join(" | ");
+    $("alertBannerText").textContent = text;
+    $("alertBanner").hidden = false;
+    document.title = "(هشدار) نمودار طلای ۱۸ عیار";
+    beep();
+    renderAlerts();
+  }
+
+  // ---------------- export ----------------
+  function saveBlob(blob, name) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = name; a.rel = "noopener";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 5000);
+  }
+  function exportCSV() {
+    const rows = rowsOf(state.asset);
+    const msg = $("sr");
+    if (rows.length < 2) { msg.textContent = "داده‌ای برای خروجی نیست."; return; }
+    const K = effRange() === "live" ? 30 : Number(effRange());
+    const y = rows.map(function (r) { return r.y; });
+    const s20 = A.sma(y, 20), s50 = A.sma(y, 50), rs = A.rsi(y, 14);
+    const start = Math.max(0, rows.length - (K + 1));
+    const out = [];
+    for (let i = start; i < rows.length; i++) {
+      const r = rows[i];
+      const rd = function (v) { return typeof v === "number" ? Math.round(v) : null; };
+      out.push([r.label, rd(r.o), rd(r.h), rd(r.l), Math.round(r.y), s20[i] === null ? null : Math.round(s20[i]), s50[i] === null ? null : Math.round(s50[i]), rs[i] === null ? null : Math.round(rs[i] * 100) / 100]);
+    }
+    const csv = A.toCSV(["date_jalali", "open", "high", "low", "close", "sma20", "sma50", "rsi14"], out);
+    saveBlob(new Blob([csv], { type: "text/csv;charset=utf-8" }), "gold-market-" + state.asset + "-" + K + "d.csv");
+    msg.textContent = "فایل CSV آماده‌ی دانلود شد.";
+  }
+  const INLINE_PROPS = ["fill", "stroke", "stroke-width", "stroke-dasharray", "stroke-opacity", "fill-opacity", "stop-color", "stop-opacity", "font-size", "font-family", "opacity"];
+  function exportPNG() {
+    const svg = document.querySelector("#chartBox svg");
+    const msg = $("sr");
+    if (!svg) { msg.textContent = "نموداری برای خروجی نیست."; return; }
+    const clone = svg.cloneNode(true);
+    const src = svg.querySelectorAll("*"), dst = clone.querySelectorAll("*");
+    for (let i = 0; i < src.length; i++) {
+      const cs = getComputedStyle(src[i]);
+      INLINE_PROPS.forEach(function (p) {
+        const v = cs.getPropertyValue(p);
+        if (v && v.indexOf("url(") !== 0) dst[i].setAttribute(p, v);
+      });
+    }
+    const W = Number(svg.getAttribute("width")), H = Number(svg.getAttribute("height"));
+    const bg = getComputedStyle(document.body).backgroundColor, fg = getComputedStyle(document.body).color;
+    const TOP = 38;
+    const outer = svgEl("svg", { xmlns: SVGNS, width: W, height: H + TOP, viewBox: "0 0 " + W + " " + (H + TOP) });
+    outer.appendChild(svgEl("rect", { x: 0, y: 0, width: W, height: H + TOP, fill: bg }));
+    outer.appendChild(svgEl("text", { x: W - 8, y: 24, "text-anchor": "end", fill: fg, "font-size": 15, "font-weight": 700, "font-family": getComputedStyle(document.body).fontFamily }, ASSETS[state.asset].label + "، " + RANGES[effRange()]));
+    clone.setAttribute("y", TOP);
+    clone.setAttribute("x", 0);
+    outer.appendChild(clone);
+    const xml = new XMLSerializer().serializeToString(outer);
+    const img = new Image();
+    img.onload = function () {
+      try {
+        const scale = 2, canvas = document.createElement("canvas");
+        canvas.width = W * scale; canvas.height = (H + TOP) * scale;
+        const ctx = canvas.getContext("2d");
+        ctx.scale(scale, scale);
+        ctx.drawImage(img, 0, 0, W, H + TOP);
+        canvas.toBlob(function (blob) {
+          if (!blob) { msg.textContent = "ساخت تصویر ناموفق بود."; return; }
+          saveBlob(blob, "gold-market-" + state.asset + "-" + effRange() + "d.png");
+          msg.textContent = "تصویر آماده‌ی دانلود شد.";
+        }, "image/png");
+      } catch (e) { msg.textContent = "ساخت تصویر ناموفق بود."; }
+    };
+    img.onerror = function () { msg.textContent = "ساخت تصویر ناموفق بود."; };
+    img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(xml);
+  }
+
+  // ---------------- render orchestration ----------------
+  function syncControls() {
+    document.querySelectorAll("#assetTabs .seg").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.a === state.asset)); });
+    document.querySelectorAll("#viewTabs .seg").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.v === state.view)); });
+    document.querySelectorAll("#overlays .chip").forEach(function (b) { b.setAttribute("aria-pressed", String(state[b.dataset.o] === true)); });
+    const r = effRange();
+    document.querySelectorAll("#tabs .tab").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.r === r)); });
+    const live = document.querySelector('#tabs .tab[data-r="live"]');
+    live.disabled = state.asset !== "gold";
+    live.title = state.asset !== "gold" ? "نمودار زنده فقط برای طلای ۱۸ عیار است" : "";
+    const liveOn = r === "live";
+    document.querySelectorAll("#overlays .chip").forEach(function (b) { b.disabled = liveOn || state.view === "compare"; });
+    const candleBtn = document.querySelector('#viewTabs .seg[data-v="candle"]');
+    candleBtn.disabled = liveOn;
+    document.querySelector('#viewTabs .seg[data-v="compare"]').disabled = liveOn;
+    $("cmpWrap").hidden = state.view !== "compare";
+    const sel = $("cmp");
+    sel.replaceChildren();
+    Object.keys(ASSETS).filter(function (k) { return k !== state.asset; }).forEach(function (k) {
+      const o = document.createElement("option");
+      o.value = k; o.textContent = ASSETS[k].label; o.selected = k === cmpTarget();
+      sel.appendChild(o);
+    });
+    $("capRange").textContent = RANGES[r];
+  }
+  function renderAll() {
+    renderStatus();
+    syncControls();
+    renderHero();
+    drawChart();
+    renderStats();
+    renderAnalysis();
+  }
+
+  // ---------------- events ----------------
+  function on(id, ev, fn) { $(id).addEventListener(ev, fn); }
+  on("assetTabs", "click", function (e) {
+    const b = e.target.closest ? e.target.closest(".seg") : null;
+    if (!b || !has(ASSETS, b.dataset.a) || b.dataset.a === state.asset) return;
+    state.asset = b.dataset.a;
+    if (state.cmp === state.asset) state.cmp = cmpTarget();
+    savePrefs(); renderAll(); loadNeeded();
+  });
+  on("viewTabs", "click", function (e) {
+    const b = e.target.closest ? e.target.closest(".seg") : null;
+    if (!b || b.disabled || VIEWS.indexOf(b.dataset.v) < 0) return;
+    state.view = b.dataset.v;
+    savePrefs(); renderAll(); loadNeeded();
+  });
+  on("overlays", "click", function (e) {
+    const b = e.target.closest ? e.target.closest(".chip") : null;
+    if (!b || b.disabled || ["ma", "bb", "rsi", "macd"].indexOf(b.dataset.o) < 0) return;
+    state[b.dataset.o] = !state[b.dataset.o];
+    savePrefs(); renderAll();
+  });
+  on("cmp", "change", function () {
+    const v = $("cmp").value;
+    if (!has(ASSETS, v) || v === state.asset) return;
+    state.cmp = v; savePrefs(); renderAll(); loadNeeded();
+  });
+  on("tabs", "click", function (e) {
+    const b = e.target.closest ? e.target.closest(".tab") : null;
+    if (!b || b.disabled || !has(RANGES, b.dataset.r)) return;
+    state.range = b.dataset.r;
+    savePrefs(); renderAll();
+  });
+  on("refresh", "click", refresh);
+  on("btnCsv", "click", exportCSV);
+  on("btnPng", "click", exportPNG);
+  on("alertDismiss", "click", function () { $("alertBanner").hidden = true; document.title = "نمودار طلای ۱۸ عیار"; });
+  on("alertForm", "submit", function (e) {
+    e.preventDefault();
+    const msg = $("alertMsg");
+    if (state.alerts.length >= 20) { msg.className = "msg"; msg.textContent = "حداکثر ۲۰ هشدار می‌توانی داشته باشی."; return; }
+    const r = A.validateAlert({ dir: $("alertDir").value, level: $("alertLevel").value }, state.latest ? state.latest.price : null);
+    if (!r.ok) { msg.className = "msg"; msg.textContent = r.error; return; }
+    try { if (!state.audio) { const AC = window.AudioContext || window.webkitAudioContext; if (AC) state.audio = new AC(); } } catch (err) { state.audio = null; }
+    state.alerts.push(r.alert);
+    store.set("alerts", state.alerts);
+    $("alertLevel").value = "";
+    msg.className = "msg ok";
+    msg.textContent = "هشدار اضافه شد.";
+    renderAlerts();
+  });
+  on("alertList", "click", function (e) {
+    const b = e.target.closest ? e.target.closest("button") : null;
+    if (!b || !b.dataset.id) return;
+    state.alerts = state.alerts.filter(function (a) { return a.id !== b.dataset.id; });
+    store.set("alerts", state.alerts);
+    renderAlerts();
+  });
+
+  let resizeRaf = 0;
+  function onResize() {
+    if (resizeRaf) return;
+    resizeRaf = requestAnimationFrame(function () {
+      resizeRaf = 0;
+      const w = Math.floor($("chartBox").clientWidth);
+      if (w && Math.abs(w - state.drawnW) > 8 && state.points >= 2) drawChart();
+    });
+  }
+  if (typeof ResizeObserver === "function") new ResizeObserver(onResize).observe($("chartBox"));
+  else window.addEventListener("resize", onResize);
+  document.addEventListener("visibilitychange", function () { if (!document.hidden && Date.now() - state.lastAttempt > C.backoff(0)) refresh(); });
+  window.addEventListener("online", function () { refresh(); });
+  window.addEventListener("offline", renderStatus);
+
+  renderAlerts();
+  renderAll();
+  refresh();
+})();
+</script>
+</body>
+</html>
